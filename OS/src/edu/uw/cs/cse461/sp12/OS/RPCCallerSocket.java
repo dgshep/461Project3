@@ -24,6 +24,7 @@ public class RPCCallerSocket extends Socket {
 	private static final String TAG = "RPCCallerSocket";
 	private TCPMessageHandler tcpHandler;
 	private String mRemoteHost;
+	private int id = 1;
 	
 	/**
 	 * Create a socket for sending RPC invocations, connecting it to the specified remote ip and port.
@@ -42,16 +43,8 @@ public class RPCCallerSocket extends Socket {
 		this.setSoTimeout(rpcTimeout);
 		Socket remoteSocket = new Socket(ip, Integer.parseInt(port));
 		tcpHandler = new TCPMessageHandler(remoteSocket);
-		JSONObject handshake = new JSONObject();
-		handshake.put("id", 2);
-		handshake.put("host", mRemoteHost);
-		handshake.put("action", "connect");
-		handshake.put("type", "control");
-		tcpHandler.sendMessage(handshake);
-		JSONObject reply = tcpHandler.readMessageAsJSONObject();
-		if (reply.get("type").equals("ERROR")){
-			throw new IOException(TAG + ": Handshake failed!");
-		}
+		handShake();
+		
 	}
 	
 	/**
@@ -62,6 +55,19 @@ public class RPCCallerSocket extends Socket {
 		tcpHandler.discard();
 	}
 	
+	private void handShake() throws JSONException, IOException {
+		JSONObject handshake = new JSONObject();
+		handshake.put("id", id);
+		id++;
+		handshake.put("host", mRemoteHost);
+		handshake.put("action", "connect");
+		handshake.put("type", "control");
+		tcpHandler.sendMessage(handshake);
+		JSONObject reply = tcpHandler.readMessageAsJSONObject();
+		if (reply.get("type").equals("ERROR")){
+			throw new IOException(TAG + ": Handshake failed!");
+		}
+	}
 	/**
 	 * Returns the name of the remote host to which this socket is connected (as specified in the constructor call).
 	 * Useful in Project 4.
@@ -80,21 +86,27 @@ public class RPCCallerSocket extends Socket {
 	 * @throws IOException 
 	 */
 	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
+		//handShake();
 		JSONObject invokation = new JSONObject();
 		invokation.put("args", userRequest);
-		invokation.put("id", 4);
+		invokation.put("id", id);
+		System.out.println(id);
 		invokation.put("app", service);
 		invokation.put("host", mRemoteHost);
 		invokation.put("method", method);
 		invokation.put("type", "invoke");
+		JSONObject output = new JSONObject();
 		tcpHandler.sendMessage(invokation);
+		id++;
 		JSONObject out = tcpHandler.readMessageAsJSONObject();
-		if(out.get("type").equals("OK")){
-			JSONObject output = out.getJSONObject("value");
-			return output;
+		if (out.get("type").equals("OK")) {
+			output = out.getJSONObject("value");
 		} else {
-			throw new IOException("Invocation Error: " + out.getString("message"));
+			throw new IOException("Invocation Error: "
+					+ out.getString("message"));
 		}
+		return output;
+
 	}
 	
 }
