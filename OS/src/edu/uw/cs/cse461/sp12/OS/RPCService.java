@@ -2,9 +2,16 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
 import java.net.ServerSocket;
+import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Map;
+
+import org.json.JSONException;
+import org.json.JSONObject;
+
+import edu.uw.cs.cse461.sp12.OS.RPCCallable.RPCCallableMethod;
+import edu.uw.cs.cse461.sp12.util.TCPMessageHandler;
 
 /**
  * Implements the side of RPC that receives remote invocation requests.
@@ -104,4 +111,92 @@ public class RPCService extends RPCCallable {
 	public int localPort() {
 		return mServerSocket.getLocalPort();
 	}
+}
+
+
+/**
+ * Manages a single user's connection to the server / back end logic
+ */
+class ServerConnection implements Runnable {
+
+	private ServerSocket connection;
+	private Map<String, RPCCallableMethod> callbacks;
+	
+	public ServerConnection(ServerSocket connection, Map<String, RPCCallableMethod> callbacks) {
+		this.connection = connection;
+		this.callbacks = callbacks;
+	}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(!connection.isClosed()) {
+			try {
+				Socket newUser = connection.accept();
+				UserConnection thread = new UserConnection(newUser, callbacks);
+				thread.run();
+			} catch (IOException e) {}
+			
+		}
+	}
+
+}
+
+class UserConnection implements Runnable {
+
+	Socket user;
+	TCPMessageHandler handler;
+	private Map<String, RPCCallableMethod> callbacks;
+	boolean listening;
+	boolean handshook;
+	
+	public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
+		this.user = user;
+		handler = new TCPMessageHandler(user);
+		listening = true;
+		handshook = false;
+		this.callbacks = callbacks;
+	}
+	
+	@Override
+	public void run() {
+		// TODO Auto-generated method stub
+		while(listening) {
+			try {
+				parseMessage(handler.readMessageAsJSONObject());
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			} catch (JSONException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}
+	}
+	
+	public void parseMessage(JSONObject json){
+		if(!handshook){
+			try {
+				if(json.getString("action").equals("connect")){
+					
+				}
+			} catch (JSONException e) {
+				// TODO didn't contain the key "action"
+				//error message
+			}
+		}else {
+			try {
+				if(json.getString("type").equals("invoke")) {
+					
+				}
+				
+			} catch (JSONException e) {
+				// TODO didn't contain the key "type"
+				//error message
+				
+				
+			}
+		}
+	}
+
 }
