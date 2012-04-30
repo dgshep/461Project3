@@ -1,9 +1,15 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.Proxy;
 import java.net.Socket;
 
+import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
+
+import edu.uw.cs.cse461.sp12.util.TCPMessageHandler;
 
 /**
  * Implements a Socket to use in sending remote RPC invocations.  (It must engage
@@ -15,7 +21,7 @@ public class RPCCallerSocket extends Socket {
 	// This variable is part of the android Log.x idiom, as in Log.v(TAG, "some debugging log message")
 	// You can use Log.x in console apps as well.
 	private static final String TAG = "RPCCallerSocket";
-	
+	private TCPMessageHandler tcpHandler;
 	private String mRemoteHost;
 	
 	/**
@@ -24,25 +30,34 @@ public class RPCCallerSocket extends Socket {
 	 * @param ip  Remote system IP address.
 	 * @param port Remote RPC service's port.
 	 * @throws IOException
+	 * @throws JSONException 
 	 */
-	public RPCCallerSocket(String hostname, String ip, String port) throws IOException {
+	public RPCCallerSocket(String hostname, String ip, String port) throws IOException, JSONException {
 		super(ip, Integer.parseInt(port));
 
 		mRemoteHost = hostname;
-
-		// An rpc timeout value is specified in the config file.  You should use that one, not this literal.
-		int rpcTimeout = 5000;  
+		int rpcTimeout = Integer.parseInt(OS.config().getProperty("rpc.timeout"));  
 		this.setSoTimeout(rpcTimeout);
-		
-		//TODO: implement
+		Socket remoteSocket = new Socket(ip, Integer.parseInt(port));
+		tcpHandler = new TCPMessageHandler(remoteSocket);
+		JSONObject handshake = new JSONObject();
+		handshake.put("id", 2);
+		handshake.put("host", mRemoteHost);
+		handshake.put("action", "connect");
+		handshake.put("type", "control");
+		tcpHandler.sendMessage(handshake);
+		JSONObject reply = tcpHandler.readMessageAsJSONObject();
+		if (reply.get("type").equals("ERROR")){
+			throw new IOException("Handshake failed!");
+		}
 	}
 	
 	/**
 	 * Close this socket.
 	 */
 	@Override
-	public void close() {
-		//TODO: implement
+	public void close() throws IOException {
+		tcpHandler.discard();
 	}
 	
 	/**
@@ -59,10 +74,23 @@ public class RPCCallerSocket extends Socket {
 	 * @param method Method of that service to invoke
 	 * @param userRequest Call arguments
 	 * @return
+	 * @throws JSONException 
+	 * @throws IOException 
 	 */
-	public JSONObject invoke(String service, String method, JSONObject userRequest) {
-		//TODO: implement
-		return null;
+	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
+		JSONObject invokation = new JSONObject();
+		invokation.put("args", userRequest);
+		invokation.put("id", 4);
+		invokation.put("app", service);
+		invokation.put("host", mRemoteHost);
+		invokation.put("method", method);
+		tcpHandler.sendMessage(invokation);
+		JSONObject out = tcpHandler.readMessageAsJSONObject();
+		if(out.get("type").equals("OK")){
+			return new JSONObject(out.getJSONArray("values"));
+		} else {
+			throw new IOException("Invocation Error:" + out.getString("message"));
+		}
 	}
 	
 }
