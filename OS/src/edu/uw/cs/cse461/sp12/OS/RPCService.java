@@ -5,6 +5,7 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 import org.json.JSONException;
@@ -61,7 +62,7 @@ public class RPCService extends RPCCallable {
 			mServerSocket = new ServerSocket();
 		mServerSocket.setReuseAddress(true); // allow port number to be reused immediately after close of this socket
 		mServerSocket.setSoTimeout(500); // well, we have to wake up every once and a while to check for program termination
-		
+		callbacks = new HashMap<String, RPCCallableMethod>();
 		ServerConnection newConnection = new ServerConnection(mServerSocket, callbacks);
 		connectionListener = new Thread(newConnection);
 		connectionListener.start();
