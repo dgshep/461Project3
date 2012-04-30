@@ -1,6 +1,7 @@
 package edu.uw.cs.cse461.sp12.OSConsoleApps;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -45,8 +46,15 @@ public class Ping implements OSConsoleApp {
 					int runs = 5;
 					
 					for(int i = 0; i < runs; i++){
-						time = newTime;
-						socket.invoke("echo", "echo", new JSONObject().put("msg", "") );
+						time = System.currentTimeMillis();
+						try {
+							socket.invoke("echo", "echo", new JSONObject().put("msg", "") );
+						} catch(IOException e){
+							socket.close();
+							socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
+							time = System.currentTimeMillis();
+							socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
+						}
 						newTime = System.currentTimeMillis();
 						long diff = newTime - time;
 						overall += diff;

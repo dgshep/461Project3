@@ -44,8 +44,9 @@ public class RPCCallerSocket extends Socket {
 		int rpcTimeout = Integer.parseInt(time);  
 		this.setSoTimeout(rpcTimeout);
 		closed = false;
+		tcpHandler = null;
+		tcpHandler = new TCPMessageHandler(this);
 		handShake();
-		
 	}
 	
 	/**
@@ -54,13 +55,14 @@ public class RPCCallerSocket extends Socket {
 	@Override
 	public void close() throws IOException {
 		if(!persistent){
-			tcpHandler.discard();
+			super.close();
 		}
+	}
+	public boolean isPersistent() {
+		return persistent;
 	}
 	
 	private void handShake() throws JSONException, IOException {
-		if (tcpHandler != null) tcpHandler.discard();
-		tcpHandler = new TCPMessageHandler(this);
 		JSONObject handshake = new JSONObject();
 		handshake.put("id", id);
 		id++;
@@ -76,6 +78,7 @@ public class RPCCallerSocket extends Socket {
 		try{
 			String contype = reply.getString("connection");
 			persistent = contype.equals("keep-alive");
+			System.out.println("Persistent Connection!");
 		} catch(JSONException e) {
 			persistent = false;
 		}
@@ -100,8 +103,7 @@ public class RPCCallerSocket extends Socket {
 	 */
 	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
 		if(closed) {
-			closed = false;
-			handShake();
+			throw new IOException("This is not a persistent connection!");
 		}
 		JSONObject invokation = new JSONObject();
 		invokation.put("args", userRequest);
