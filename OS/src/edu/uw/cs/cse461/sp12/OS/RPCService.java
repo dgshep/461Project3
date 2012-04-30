@@ -55,7 +55,7 @@ public class RPCService extends RPCCallable {
 		// setSoTimeout causes a thread waiting for connections to timeout, instead of waiting forever, if no connection
 		// is made before the timeout interval expires.  (You don't have to use 1/2 sec. for this value - choose your own.)
 		String port = OS.config().getProperty("rpc.serverport");
-		if(port != null)
+		if(port != null && port.length() > 0)
 			mServerSocket = new ServerSocket(Integer.parseInt(port));
 		else
 			mServerSocket = new ServerSocket();
@@ -140,6 +140,7 @@ public class RPCService extends RPCCallable {
 	
 	private class UserConnection implements Runnable {
 
+		private Socket user;
 		private TCPMessageHandler handler;
 		private boolean listening;
 		private boolean handshook;
@@ -150,12 +151,13 @@ public class RPCService extends RPCCallable {
 			listening = true;
 			handshook = false;
 			id = 1;
+			this.user = user;
 		}
 		
 		@Override
 		public void run() {
 			// TODO Auto-generated method stub
-			while(listening) {
+			while(!user.isClosed()) {
 				try {
 					parseMessage(handler.readMessageAsJSONObject());
 				} catch (IOException e) {
@@ -181,10 +183,20 @@ public class RPCService extends RPCCallable {
 						id++;
 					}
 				} catch (JSONException e) {
-					// TODO didn't contain the key "action"
-					//error message
+					//didn't contain the key "action"
+					try {
+						JSONObject error = new JSONObject();
+						error.put("id", id);
+						error.put("host", "");
+						error.put("callid", json.getInt("id"));
+						error.put("type", "ERROR");
+						error.put("message", "handshake message illformed");
+						handler.sendMessage(error);
+						id++;
+					} catch (Exception e1) {
+						e.printStackTrace();
+					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}else {
@@ -197,8 +209,18 @@ public class RPCService extends RPCCallable {
 					}
 					
 				} catch (JSONException e) {
-					// TODO didn't contain the key "type"
-					//error message
+					try {
+						JSONObject error = new JSONObject();
+						error.put("id", id);
+						error.put("host", "");
+						error.put("callid", json.getInt("id"));
+						error.put("type", "ERROR");
+						error.put("message", "handshake message illformed");
+						handler.sendMessage(error);
+						id++;
+					} catch (Exception e1) {
+						e.printStackTrace();
+					}
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
