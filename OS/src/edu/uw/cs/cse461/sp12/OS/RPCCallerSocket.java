@@ -88,7 +88,7 @@ public class RPCCallerSocket extends Socket {
 	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
 		JSONObject invokation = new JSONObject();
 		invokation.put("args", userRequest);
-		invokation.put("id", id);
+		invokation.put("id", id + "");
 		//System.out.println(id);
 		invokation.put("app", service);
 		invokation.put("host", mRemoteHost);
