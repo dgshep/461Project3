@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -166,7 +167,8 @@ public class RPCService extends RPCCallable {
 					parseMessage(handler.readMessageAsJSONObject());
 				} catch (IOException e) {
 					// TODO Auto-generated catch block
-					e.printStackTrace();
+					//e.printStackTrace();
+					break;
 				} catch (JSONException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -219,7 +221,7 @@ public class RPCService extends RPCCallable {
 						error.put("host", "");
 						error.put("callid", json.getInt("id"));
 						error.put("type", "ERROR");
-						error.put("message", "message illformed");
+						error.put("message", "message malformed");
 						JSONObject copy = new JSONObject();
 						JSONArray names = json.names();
 						for ( int i=0; i<names.length(); i++ ) {
