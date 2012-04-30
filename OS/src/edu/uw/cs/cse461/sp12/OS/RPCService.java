@@ -1,6 +1,7 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
+import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -23,7 +24,7 @@ import edu.uw.cs.cse461.sp12.util.TCPMessageHandler;
  */
 public class RPCService extends RPCCallable {
 	// used with the android idiom Log.x, as in Log.v(TAG, "some debug log message")
-	private static final String TAG="RPCService";
+	public static final String TAG="RPCService";
 	
 	private ServerSocket mServerSocket;
 	private Thread connectionListener;
@@ -59,8 +60,9 @@ public class RPCService extends RPCCallable {
 		String port = OS.config().getProperty("rpc.serverport");
 		if(port != null && port.length() > 0)
 			mServerSocket = new ServerSocket(Integer.parseInt(port));
-		else
-			mServerSocket = new ServerSocket();
+		else{
+			mServerSocket = new ServerSocket(0);
+		}
 		mServerSocket.setReuseAddress(true); // allow port number to be reused immediately after close of this socket
 		mServerSocket.setSoTimeout(500); // well, we have to wake up every once and a while to check for program termination
 		callbacks = new HashMap<String, RPCCallableMethod>();
@@ -102,8 +104,7 @@ public class RPCService extends RPCCallable {
 	 * @throws UnknownHostException
 	 */
 	public String localIP() throws UnknownHostException {
-		//TODO might have to remove the port from the end of the string
-		return mServerSocket.toString();
+		return InetAddress.getLocalHost().getHostAddress();
 	}
 
 	/**
@@ -149,6 +150,7 @@ public class RPCService extends RPCCallable {
 		private int id;
 		
 		public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
+			System.out.println("connection made");
 			handler = new TCPMessageHandler(user);
 			listening = true;
 			handshook = false;
