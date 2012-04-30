@@ -111,92 +111,108 @@ public class RPCService extends RPCCallable {
 	public int localPort() {
 		return mServerSocket.getLocalPort();
 	}
-}
-
-
-/**
- * Manages a single user's connection to the server / back end logic
- */
-class ServerConnection implements Runnable {
-
-	private ServerSocket connection;
-	private Map<String, RPCCallableMethod> callbacks;
 	
-	public ServerConnection(ServerSocket connection, Map<String, RPCCallableMethod> callbacks) {
-		this.connection = connection;
-		this.callbacks = callbacks;
-	}
-	
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		while(!connection.isClosed()) {
-			try {
-				Socket newUser = connection.accept();
-				UserConnection thread = new UserConnection(newUser, callbacks);
-				thread.run();
-			} catch (IOException e) {}
-			
+	/**
+	 * Manages a single user's connection to the server / back end logic
+	 */
+	private class ServerConnection implements Runnable {
+
+		private ServerSocket connection;
+		
+		public ServerConnection(ServerSocket connection, Map<String, RPCCallableMethod> callbacks) {
+			this.connection = connection;
 		}
-	}
-
-}
-
-class UserConnection implements Runnable {
-
-	Socket user;
-	TCPMessageHandler handler;
-	private Map<String, RPCCallableMethod> callbacks;
-	boolean listening;
-	boolean handshook;
-	
-	public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
-		this.user = user;
-		handler = new TCPMessageHandler(user);
-		listening = true;
-		handshook = false;
-		this.callbacks = callbacks;
-	}
-	
-	@Override
-	public void run() {
-		// TODO Auto-generated method stub
-		while(listening) {
-			try {
-				parseMessage(handler.readMessageAsJSONObject());
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (JSONException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+		
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			while(!connection.isClosed()) {
+				try {
+					Socket newUser = connection.accept();
+					UserConnection thread = new UserConnection(newUser, callbacks);
+					thread.run();
+				} catch (IOException e) {}
+				
 			}
 		}
+
 	}
 	
-	public void parseMessage(JSONObject json){
-		if(!handshook){
-			try {
-				if(json.getString("action").equals("connect")){
-					
+	private class UserConnection implements Runnable {
+
+		private TCPMessageHandler handler;
+		private boolean listening;
+		private boolean handshook;
+		private int id;
+		
+		public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
+			handler = new TCPMessageHandler(user);
+			listening = true;
+			handshook = false;
+			id = 1;
+		}
+		
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			while(listening) {
+				try {
+					parseMessage(handler.readMessageAsJSONObject());
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (JSONException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
 				}
-			} catch (JSONException e) {
-				// TODO didn't contain the key "action"
-				//error message
-			}
-		}else {
-			try {
-				if(json.getString("type").equals("invoke")) {
-					
-				}
-				
-			} catch (JSONException e) {
-				// TODO didn't contain the key "type"
-				//error message
-				
-				
 			}
 		}
-	}
+		
+		public void parseMessage(JSONObject json){
+			if(!handshook){
+				try {
+					if(json.getString("action").equals("connect")){
+						JSONObject reply = new JSONObject();
+						reply.put("id", id);
+						reply.put("host", "");
+						reply.put("callid", json.getInt("id"));
+						reply.put("type", "OK");
+						handler.sendMessage(reply);
+						id++;
+					}
+				} catch (JSONException e) {
+					// TODO didn't contain the key "action"
+					//error message
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}else {
+				try {
+					if(json.getString("type").equals("invoke")) {
+						String key = "";
+						key += json.getString("app") + json.getString("method");
+						handler.sendMessage(callbacks.get(key).handleCall(json));
+						id++;
+					}
+					
+				} catch (JSONException e) {
+					// TODO didn't contain the key "type"
+					//error message
+				} catch (IOException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (NullPointerException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				} catch (Exception e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		}
 
+	}
+	
 }
+
