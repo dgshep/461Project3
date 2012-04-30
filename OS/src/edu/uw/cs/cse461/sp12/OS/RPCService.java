@@ -187,6 +187,7 @@ public class RPCService extends RPCCallable {
 						reply.put("type", "OK");
 						handler.sendMessage(reply);
 						id++;
+						handshook = true;
 					}
 				} catch (JSONException e) {
 					//didn't contain the key "action"
