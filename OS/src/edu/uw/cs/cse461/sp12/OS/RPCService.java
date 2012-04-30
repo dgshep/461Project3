@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
+import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -191,7 +192,7 @@ public class RPCService extends RPCCallable {
 						error.put("host", "");
 						error.put("callid", json.getInt("id"));
 						error.put("type", "ERROR");
-						error.put("message", "handshake message illformed");
+						error.put("message", "handshake message malformed");
 						handler.sendMessage(error);
 						id++;
 					} catch (Exception e1) {
@@ -216,18 +217,41 @@ public class RPCService extends RPCCallable {
 						error.put("host", "");
 						error.put("callid", json.getInt("id"));
 						error.put("type", "ERROR");
-						error.put("message", "handshake message illformed");
+						error.put("message", "message illformed");
+						JSONObject copy = new JSONObject();
+						JSONArray names = json.names();
+						for ( int i=0; i<names.length(); i++ ) {
+							String key = (String)names.getString(i);
+							copy.put(key, json.getString(key));
+						}
+						error.put("callargs", copy);
 						handler.sendMessage(error);
 						id++;
 					} catch (Exception e1) {
 						e.printStackTrace();
 					}
 				} catch (IOException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				} catch (NullPointerException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					try {
+						JSONObject error = new JSONObject();
+						error.put("id", id);
+						error.put("host", "");
+						error.put("callid", json.getInt("id"));
+						error.put("type", "ERROR");
+						error.put("message", "method not found");
+						JSONObject copy = new JSONObject();
+						JSONArray names = json.names();
+						for ( int i=0; i<names.length(); i++ ) {
+							String key = (String)names.getString(i);
+							copy.put(key, json.getString(key));
+						}
+						error.put("callargs", copy);
+						handler.sendMessage(error);
+						id++;
+					} catch (Exception e1) {
+						e.printStackTrace();
+					}
 				} catch (Exception e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
