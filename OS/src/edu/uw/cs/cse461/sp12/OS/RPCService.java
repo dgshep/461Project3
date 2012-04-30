@@ -165,18 +165,15 @@ public class RPCService extends RPCCallable {
 			while(!user.isClosed()) {
 				try {
 					parseMessage(handler.readMessageAsJSONObject());
-				} catch (IOException e) {
-					// TODO Auto-generated catch block
-					//e.printStackTrace();
-					break;
-				} catch (JSONException e) {
-					// TODO Auto-generated catch block
+				} catch (Exception e) {
 					e.printStackTrace();
+					System.out.println(e.getMessage());
+					break;
 				}
 			}
 		}
 		
-		public void parseMessage(JSONObject json){
+		public void parseMessage(JSONObject json) throws Exception{
 			if(!handshook){
 				try {
 					if(json.getString("action").equals("connect")){
@@ -191,20 +188,14 @@ public class RPCService extends RPCCallable {
 					}
 				} catch (JSONException e) {
 					//didn't contain the key "action"
-					try {
-						JSONObject error = new JSONObject();
-						error.put("id", id);
-						error.put("host", "");
-						error.put("callid", json.getInt("id"));
-						error.put("type", "ERROR");
-						error.put("message", "handshake message malformed");
-						handler.sendMessage(error);
-						id++;
-					} catch (Exception e1) {
-						e.printStackTrace();
-					}
-				} catch (IOException e) {
-					e.printStackTrace();
+					JSONObject error = new JSONObject();
+					error.put("id", id);
+					error.put("host", "");
+					error.put("callid", json.getInt("id"));
+					error.put("type", "ERROR");
+					error.put("message", "handshake message malformed");
+					handler.sendMessage(error);
+					id++;
 				}
 			}else {
 				try {
@@ -214,52 +205,38 @@ public class RPCService extends RPCCallable {
 						handler.sendMessage(callbacks.get(key).handleCall(json));
 						id++;
 					}
-					
 				} catch (JSONException e) {
-					try {
-						JSONObject error = new JSONObject();
-						error.put("id", id);
-						error.put("host", "");
-						error.put("callid", json.getInt("id"));
-						error.put("type", "ERROR");
-						error.put("message", "message malformed");
-						JSONObject copy = new JSONObject();
-						JSONArray names = json.names();
-						for ( int i=0; i<names.length(); i++ ) {
-							String key = (String)names.getString(i);
-							copy.put(key, json.getString(key));
-						}
-						error.put("callargs", copy);
-						handler.sendMessage(error);
-						id++;
-					} catch (Exception e1) {
-						e.printStackTrace();
+					JSONObject error = new JSONObject();
+					error.put("id", id);
+					error.put("host", "");
+					error.put("callid", json.getInt("id"));
+					error.put("type", "ERROR");
+					error.put("message", "message malformed");
+					JSONObject copy = new JSONObject();
+					JSONArray names = json.names();
+					for ( int i=0; i<names.length(); i++ ) {
+						String key = (String)names.getString(i);
+						copy.put(key, json.getString(key));
 					}
-				} catch (IOException e) {
-					e.printStackTrace();
+					error.put("callargs", copy);
+					handler.sendMessage(error);
+					id++;
 				} catch (NullPointerException e) {
-					try {
-						JSONObject error = new JSONObject();
-						error.put("id", id);
-						error.put("host", "");
-						error.put("callid", json.getInt("id"));
-						error.put("type", "ERROR");
-						error.put("message", "method not found");
-						JSONObject copy = new JSONObject();
-						JSONArray names = json.names();
-						for ( int i=0; i<names.length(); i++ ) {
-							String key = (String)names.getString(i);
-							copy.put(key, json.getString(key));
-						}
-						error.put("callargs", copy);
-						handler.sendMessage(error);
-						id++;
-					} catch (Exception e1) {
-						e.printStackTrace();
+					JSONObject error = new JSONObject();
+					error.put("id", id);
+					error.put("host", "");
+					error.put("callid", json.getInt("id"));
+					error.put("type", "ERROR");
+					error.put("message", "method not found");
+					JSONObject copy = new JSONObject();
+					JSONArray names = json.names();
+					for ( int i=0; i<names.length(); i++ ) {
+						String key = (String)names.getString(i);
+						copy.put(key, json.getString(key));
 					}
-				} catch (Exception e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
+					error.put("callargs", copy);
+					handler.sendMessage(error);
+					id++;
 				}
 			}
 		}
