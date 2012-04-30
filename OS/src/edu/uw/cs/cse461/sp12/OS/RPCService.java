@@ -1,7 +1,10 @@
 package edu.uw.cs.cse461.sp12.OS;
 
+import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.Map;
 
 /**
  * Implements the side of RPC that receives remote invocation requests.
@@ -14,6 +17,8 @@ public class RPCService extends RPCCallable {
 	private static final String TAG="RPCService";
 	
 	private ServerSocket mServerSocket;
+	private Thread connectionListener;
+	private Map<String, RPCCallableMethod> callbacks;
 	
 	/**
 	 * This method must be implemented by RPCCallable's.  
@@ -42,9 +47,17 @@ public class RPCService extends RPCCallable {
 		// later in the course.
 		// setSoTimeout causes a thread waiting for connections to timeout, instead of waiting forever, if no connection
 		// is made before the timeout interval expires.  (You don't have to use 1/2 sec. for this value - choose your own.)
+		String port = OS.config().getProperty("rpc.serverport");
+		if(port != null)
+			mServerSocket = new ServerSocket(Integer.parseInt(port));
+		else
+			mServerSocket = new ServerSocket();
 		mServerSocket.setReuseAddress(true); // allow port number to be reused immediately after close of this socket
 		mServerSocket.setSoTimeout(500); // well, we have to wake up every once and a while to check for program termination
-
+		
+		ServerConnection newConnection = new ServerConnection(mServerSocket, callbacks);
+		connectionListener = new Thread(newConnection);
+		connectionListener.start();
 		//TODO: implement
 	}
 	
@@ -52,7 +65,13 @@ public class RPCService extends RPCCallable {
 	 * System is shutting down imminently.  Do any cleanup required.
 	 */
 	public void shutdown() {
-		//TODO: implement
+		try {
+			mServerSocket.close();
+		} catch (IOException e) {}
+	}
+	
+	public Map<String, RPCCallableMethod> getHandlers() {
+		return Collections.unmodifiableMap(callbacks);
 	}
 	
 	/**
@@ -65,6 +84,7 @@ public class RPCService extends RPCCallable {
 	 */
 	public synchronized void registerHandler(String serviceName, String methodName, RPCCallableMethod method) throws Exception {
 		//TODO: implement
+		callbacks.put(serviceName + methodName, method);
 	}
 	
 	/**
@@ -73,8 +93,8 @@ public class RPCService extends RPCCallable {
 	 * @throws UnknownHostException
 	 */
 	public String localIP() throws UnknownHostException {
-		//TODO: implement
-		return "localIP() not yet implemented";
+		//TODO might have to remove the port from the end of the string
+		return mServerSocket.toString();
 	}
 
 	/**
@@ -82,7 +102,6 @@ public class RPCService extends RPCCallable {
 	 * @return
 	 */
 	public int localPort() {
-		//TODO: implement
-		return -1;
+		return mServerSocket.getLocalPort();
 	}
 }
