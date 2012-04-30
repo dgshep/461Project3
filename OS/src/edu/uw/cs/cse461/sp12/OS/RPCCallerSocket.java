@@ -25,6 +25,8 @@ public class RPCCallerSocket extends Socket {
 	private TCPMessageHandler tcpHandler;
 	private String mRemoteHost;
 	private int id = 1;
+	private boolean persistent;
+	private boolean closed;
 	
 	/**
 	 * Create a socket for sending RPC invocations, connecting it to the specified remote ip and port.
@@ -41,8 +43,7 @@ public class RPCCallerSocket extends Socket {
 		String time = OS.config().getProperty("rpc.timeout");
 		int rpcTimeout = Integer.parseInt(time);  
 		this.setSoTimeout(rpcTimeout);
-		//System.out.println(ip + ":" + port);
-		tcpHandler = new TCPMessageHandler(this);
+		closed = false;
 		handShake();
 		
 	}
@@ -52,21 +53,33 @@ public class RPCCallerSocket extends Socket {
 	 */
 	@Override
 	public void close() throws IOException {
-		tcpHandler.discard();
+		if(!persistent){
+			tcpHandler.discard();
+		}
 	}
 	
 	private void handShake() throws JSONException, IOException {
+		if (tcpHandler != null) tcpHandler.discard();
+		tcpHandler = new TCPMessageHandler(this);
 		JSONObject handshake = new JSONObject();
 		handshake.put("id", id);
 		id++;
 		handshake.put("host", mRemoteHost);
 		handshake.put("action", "connect");
+		handshake.put("connection", "keep-alive");
 		handshake.put("type", "control");
 		tcpHandler.sendMessage(handshake);
 		JSONObject reply = tcpHandler.readMessageAsJSONObject();
 		if (reply.get("type").equals("ERROR")){
 			throw new IOException(TAG + ": Handshake failed!");
 		}
+		try{
+			String contype = reply.getString("connection");
+			persistent = contype.equals("keep-alive");
+		} catch(JSONException e) {
+			persistent = false;
+		}
+		
 	}
 	/**
 	 * Returns the name of the remote host to which this socket is connected (as specified in the constructor call).
@@ -86,6 +99,10 @@ public class RPCCallerSocket extends Socket {
 	 * @throws IOException 
 	 */
 	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
+		if(closed) {
+			closed = false;
+			handShake();
+		}
 		JSONObject invokation = new JSONObject();
 		invokation.put("args", userRequest);
 		invokation.put("id", id);
@@ -103,6 +120,9 @@ public class RPCCallerSocket extends Socket {
 		} else {
 			throw new IOException("Invocation Error: "
 					+ out.getString("message"));
+		}
+		if(!persistent){
+			closed = true;
 		}
 		return output;
 
