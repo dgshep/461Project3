@@ -41,8 +41,8 @@ public class RPCCallerSocket extends Socket {
 		String time = OS.config().getProperty("rpc.timeout");
 		int rpcTimeout = Integer.parseInt(time);  
 		this.setSoTimeout(rpcTimeout);
-		Socket remoteSocket = new Socket(ip, Integer.parseInt(port));
-		tcpHandler = new TCPMessageHandler(remoteSocket);
+		//System.out.println(ip + ":" + port);
+		tcpHandler = new TCPMessageHandler(this);
 		handShake();
 		
 	}
@@ -86,11 +86,10 @@ public class RPCCallerSocket extends Socket {
 	 * @throws IOException 
 	 */
 	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
-		//handShake();
 		JSONObject invokation = new JSONObject();
 		invokation.put("args", userRequest);
 		invokation.put("id", id);
-		System.out.println(id);
+		//System.out.println(id);
 		invokation.put("app", service);
 		invokation.put("host", mRemoteHost);
 		invokation.put("method", method);

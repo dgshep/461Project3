@@ -38,7 +38,7 @@ public class Echo implements OSConsoleApp {
 
 					System.out.print("Enter message to be echoed: ");
 					String msg = console.readLine();
-					
+					//System.out.println(targetIP + " " + targetPort + " " + msg);
 					RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
 					JSONObject response = socket.invoke("echo", "echo", new JSONObject().put("msg", msg) );
 					
