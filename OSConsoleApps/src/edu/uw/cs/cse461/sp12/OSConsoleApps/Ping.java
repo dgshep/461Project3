@@ -58,6 +58,7 @@ public class Ping implements OSConsoleApp {
 					break;
 				} catch (Exception e) {
 					System.out.println("Exception: " + e.getMessage());
+					break;
 				}
 			}
 		} catch (Exception e) {
