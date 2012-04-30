@@ -258,8 +258,6 @@ public class RPCService extends RPCCallable {
 				}
 			}
 		}
-
 	}
-	
 }
 
