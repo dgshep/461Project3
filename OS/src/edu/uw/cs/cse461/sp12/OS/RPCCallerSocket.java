@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.Proxy;
 import java.net.Socket;
+import java.util.Properties;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -36,7 +37,8 @@ public class RPCCallerSocket extends Socket {
 		super(ip, Integer.parseInt(port));
 
 		mRemoteHost = hostname;
-		int rpcTimeout = Integer.parseInt(OS.config().getProperty("rpc.timeout"));  
+		String time = OS.config().getProperty("rpc.timeout");
+		int rpcTimeout = Integer.parseInt(time);  
 		this.setSoTimeout(rpcTimeout);
 		Socket remoteSocket = new Socket(ip, Integer.parseInt(port));
 		tcpHandler = new TCPMessageHandler(remoteSocket);
@@ -48,7 +50,7 @@ public class RPCCallerSocket extends Socket {
 		tcpHandler.sendMessage(handshake);
 		JSONObject reply = tcpHandler.readMessageAsJSONObject();
 		if (reply.get("type").equals("ERROR")){
-			throw new IOException("Handshake failed!");
+			throw new IOException(TAG + ": Handshake failed!");
 		}
 	}
 	
@@ -84,12 +86,14 @@ public class RPCCallerSocket extends Socket {
 		invokation.put("app", service);
 		invokation.put("host", mRemoteHost);
 		invokation.put("method", method);
+		invokation.put("type", "invoke");
 		tcpHandler.sendMessage(invokation);
 		JSONObject out = tcpHandler.readMessageAsJSONObject();
 		if(out.get("type").equals("OK")){
-			return new JSONObject(out.getJSONArray("values"));
+			JSONObject output = out.getJSONObject("value");
+			return output;
 		} else {
-			throw new IOException("Invocation Error:" + out.getString("message"));
+			throw new IOException("Invocation Error: " + out.getString("message"));
 		}
 	}
 	
