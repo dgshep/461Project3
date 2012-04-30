@@ -202,7 +202,13 @@ public class RPCService extends RPCCallable {
 					if(json.getString("type").equals("invoke")) {
 						String key = "";
 						key += json.getString("app") + json.getString("method");
-						handler.sendMessage(callbacks.get(key).handleCall(json));
+						JSONObject reply = new JSONObject();
+						reply.put("value", callbacks.get(key).handleCall(json.getJSONObject("args")));
+						reply.put("id", id);
+						reply.put("host", "");
+						reply.put("callid", json.get("id"));
+						reply.put("type", "OK");
+						handler.sendMessage(reply);
 						id++;
 					}
 				} catch (JSONException e) {
