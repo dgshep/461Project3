@@ -1,11 +1,9 @@
 package edu.uw.cs.cse461.sp12.OS;
 
-import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.HashMap;
@@ -15,7 +13,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import edu.uw.cs.cse461.sp12.OS.RPCCallable.RPCCallableMethod;
 import edu.uw.cs.cse461.sp12.util.TCPMessageHandler;
 
 /**
@@ -30,6 +27,7 @@ public class RPCService extends RPCCallable {
 	
 	private ServerSocket mServerSocket;
 	private Thread connectionListener;
+	@SuppressWarnings("rawtypes")
 	private Map<String, RPCCallableMethod> callbacks;
 	
 	/**
@@ -51,6 +49,7 @@ public class RPCService extends RPCCallable {
 	 * 
 	 * @throws Exception
 	 */
+	@SuppressWarnings("rawtypes")
 	RPCService() throws Exception {
 
 		// Set some socket options.  
@@ -83,6 +82,7 @@ public class RPCService extends RPCCallable {
 		} catch (IOException e) {}
 	}
 	
+	@SuppressWarnings("rawtypes")
 	public Map<String, RPCCallableMethod> getHandlers() {
 		return Collections.unmodifiableMap(callbacks);
 	}
@@ -95,6 +95,7 @@ public class RPCService extends RPCCallable {
 	 * @param method The descriptor allowing invocation of the Java method implementing the call
 	 * @throws Exception
 	 */
+	@SuppressWarnings("rawtypes")
 	public synchronized void registerHandler(String serviceName, String methodName, RPCCallableMethod method) throws Exception {
 		//TODO: implement
 		callbacks.put(serviceName + methodName, method);
@@ -124,6 +125,7 @@ public class RPCService extends RPCCallable {
 
 		private ServerSocket connection;
 		
+		@SuppressWarnings("rawtypes")
 		public ServerConnection(ServerSocket connection, Map<String, RPCCallableMethod> callbacks) {
 			this.connection = connection;
 		}
@@ -147,14 +149,13 @@ public class RPCService extends RPCCallable {
 
 		private Socket user;
 		private TCPMessageHandler handler;
-		private boolean listening;
 		private boolean handshook;
 		private int id;
 		
+		@SuppressWarnings("rawtypes")
 		public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
 			//System.out.println("connection made");
 			handler = new TCPMessageHandler(user);
-			listening = true;
 			handshook = false;
 			id = 1;
 			this.user = user;

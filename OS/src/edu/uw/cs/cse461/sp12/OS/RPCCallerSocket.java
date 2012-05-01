@@ -1,12 +1,8 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.Proxy;
 import java.net.Socket;
-import java.util.Properties;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 

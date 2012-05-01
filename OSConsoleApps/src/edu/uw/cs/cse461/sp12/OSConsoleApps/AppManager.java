@@ -95,6 +95,7 @@ public class AppManager {
 			for ( String appClassname : appClassList ) {
 				Log.v(TAG, "Loading " + appClassname);
 				startingApp = appClassname;
+				@SuppressWarnings("unchecked")
 				Class<OSConsoleApp> appClass = (Class<OSConsoleApp>)Class.forName(appClassname);
 				OSConsoleApp app = appClass.newInstance();
 				mAppMap.put(app.appname(), app);

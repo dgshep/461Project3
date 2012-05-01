@@ -80,6 +80,7 @@ public class OS {
 				Log.v(TAG, "Starting " + serviceClassname);
 				startingService = serviceClassname;
 				// Get the Java Class object
+				@SuppressWarnings("unchecked")
 				Class<RPCCallable> serviceClass = (Class<RPCCallable>)Class.forName(serviceClassname);
 				// Create an instance of the class
 				RPCCallable service = serviceClass.newInstance();

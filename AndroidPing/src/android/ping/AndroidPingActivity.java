@@ -1,43 +1,50 @@
 package android.ping;
 
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 import java.util.Properties;
 
 import org.json.JSONException;
 import org.json.JSONObject;
-
 
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.EditText;
 import android.widget.TextView;
+
+import edu.uw.cs.cse461.sp12.OS.OS;
+import edu.uw.cs.cse461.sp12.OS.RPCCallerSocket;
 
 
 
 public class AndroidPingActivity extends Activity {
 	public static final String TAG = "AndroidPingActivity";
     public static final String PREFS_NAME = "CSE461";
-    private final String configFilename = "foo.bar.config.ini";
 
-//    private Client mClient;
-    private Thread mClientThread;
-	private String mServerHost;
-	private String mServerPort;
+private String mServerHost;
+private String mServerPort;
 	
 	/** Called when the activity is first created.  Establishes the UI.  Reads state information saved by previous runs. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        InputMethodManager imm = (InputMethodManager)getSystemService(this.INPUT_METHOD_SERVICE);
-        imm.hideSoftInputFromWindow(findViewById(R.id.host_ip).getWindowToken(), 0);
-        imm.hideSoftInputFromWindow(findViewById(R.id.app_port).getWindowToken(), 0);
-
+        InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        Properties config = new Properties();
+        config.put("host.name", "foo.bar.");
+        config.put("rpc.timeout", "10000");
+		// boot the OS and load RPC services
+		try {
+			OS.boot(config);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+		OS.startServices(OS.rpcServiceClasses);
 //        mClient = new Client();
 //        mClient.addListener(this);
 //        
@@ -101,7 +108,21 @@ public class AndroidPingActivity extends Activity {
 		long time;
 		long newTime;
 		long overall = 0;
-		AndroidRPCCallerSocket socket = new AndroidRPCCallerSocket(mServerHost, mServerHost, mServerPort);
+		int portNum = 0;
+		RPCCallerSocket socket;
+		try {
+			portNum = Integer.parseInt(mServerPort);
+			socket = new RPCCallerSocket(mServerHost, mServerHost, portNum);
+		} catch(UnknownHostException e){
+			output.append("Unknown Host!");
+			return;
+		} catch(SocketException e){
+			output.append(e.getMessage());
+			return;
+		} catch(NumberFormatException e){
+			output.append("Not a valid port number!");
+			return;
+		}
 		for(int i = 0; i < runs; i++){
 			time = System.currentTimeMillis();
 			socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
@@ -111,7 +132,7 @@ public class AndroidPingActivity extends Activity {
 			output.append("Run #" + i + " (msec): " + diff + "\n");
 			if(!socket.isPersistent() && i < runs){
 				socket.close();
-				socket = new AndroidRPCCallerSocket(mServerHost, mServerHost, mServerPort);
+				socket = new RPCCallerSocket(mServerHost, mServerHost, portNum);
 			}
 		}
 		output.append("Average (msec): " + ((double)overall) / runs + "\n");
@@ -127,6 +148,15 @@ public class AndroidPingActivity extends Activity {
      * to update the display when characters arrive.  This class is useful for establishing
      * that inter-thread communication.
      */
+    private class PingRunnerClass implements Runnable {
+
+		@Override
+		public void run() {
+			// TODO Auto-generated method stub
+			
+		}
+    	
+    }
 //    private class OnCharClass implements Runnable {
 //    	private static final int MAXCHARS = 25;
 //    	int type;

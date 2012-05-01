@@ -58,6 +58,7 @@ public abstract class RPCCallable {
 		 */
 		RPCCallableMethod(T serviceObject, String methodName) throws NoSuchMethodException { 
 			service = serviceObject; 
+			@SuppressWarnings("unchecked")
 			Class<T> serviceClass = (Class<T>)service.getClass();
 			method = serviceClass.getMethod(methodName, JSONObject.class);
 		}

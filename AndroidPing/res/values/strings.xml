@@ -3,5 +3,7 @@
 
     <string name="hello">Hello World, AndroidPingActivity!</string>
     <string name="app_name">AndroidPing</string>
+    <string name="DefaultHost">cse461.cs.washington.edu</string>
+    <string name="DefaultPort">46120</string>
 
 </resources>

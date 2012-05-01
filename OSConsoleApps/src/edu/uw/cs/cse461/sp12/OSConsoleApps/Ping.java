@@ -1,10 +1,7 @@
 package edu.uw.cs.cse461.sp12.OSConsoleApps;
 
 import java.io.BufferedReader;
-import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.json.JSONObject;
 
@@ -37,9 +34,11 @@ public class Ping implements OSConsoleApp {
 					System.out.print("Enter the RPC port, or empty line to exit: ");
 					String targetPort = console.readLine();
 					if ( targetPort == null || targetPort.isEmpty() ) continue;
-
-					
-					RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
+					try {
+						RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
+					} catch(NumberFormatException e) {
+						continue;
+					}
 					long time = System.currentTimeMillis();
 					long newTime = time;
 					long overall = 0;
