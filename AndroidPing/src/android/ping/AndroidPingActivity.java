@@ -21,11 +21,12 @@ import edu.uw.cs.cse461.sp12.OS.RPCCallerSocket;
 
 
 public class AndroidPingActivity extends Activity {
+	
 	public static final String TAG = "AndroidPingActivity";
     public static final String PREFS_NAME = "CSE461";
 
-private String mServerHost;
-private String mServerPort;
+    private String mServerHost;
+    private String mServerPort;
 	
 	/** Called when the activity is first created.  Establishes the UI.  Reads state information saved by previous runs. */
     @Override
@@ -78,19 +79,6 @@ private String mServerPort;
     private boolean readUserInputs() {
         mServerHost = ((TextView)findViewById(R.id.host_ip)).getText().toString();
         mServerPort = ((TextView)findViewById(R.id.app_port)).getText().toString();
-//        if(mServerPort != 46100){
-//	        try {
-//	        	mServerInterSymbolTime = mClient.portToIntersymbolTime(mServerPort, Properties.SERVER_INTER_SYMBOL_TIME);
-//	        } catch (Exception e) {
-//	        	// display a fleeting error message
-//	    		Toast toast = Toast.makeText(getApplicationContext(), "Valid port numbers are " + Properties.SERVER_PORT_NEGOTIATE + "-" + 
-//	    							(Properties.SERVER_PORT_NEGOTIATE + Properties.SERVER_PORT_INTERSYMBOL_TIME_VEC.length), Toast.LENGTH_LONG);
-//	    		toast.show();
-//	    		return false;
-//	    	}
-//        } else{
-//        	mServerInterSymbolTime = Integer.parseInt(((TextView)findViewById(R.id.interText)).getText().toString());
-//        }
     	return true;
     }
     
@@ -138,6 +126,11 @@ private String mServerPort;
 		output.append("Socket Closed.");
     }
 
+    public void whoami(View v) throws IOException, JSONException {
+    	TextView output = (TextView) findViewById(R.id.output);
+    	output.setText("");
+    }
+    
     /**
      * Helper class to get onChar activity onto UI thread
      * <p>
@@ -148,7 +141,6 @@ private String mServerPort;
      */
     private class PingRunnerClass implements Runnable {
 
-		@Override
 		public void run() {
 			// TODO Auto-generated method stub
 			

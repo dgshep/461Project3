@@ -130,7 +130,6 @@ public class RPCService extends RPCCallable {
 			this.connection = connection;
 		}
 		
-		@Override
 		public void run() {
 			// TODO Auto-generated method stub
 			while(!connection.isClosed()) {
@@ -161,7 +160,6 @@ public class RPCService extends RPCCallable {
 			this.user = user;
 		}
 		
-		@Override
 		public void run() {
 			// TODO Auto-generated method stub
 			while(!user.isClosed()) {

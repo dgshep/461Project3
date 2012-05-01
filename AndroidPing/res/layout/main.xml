@@ -10,45 +10,57 @@
         android:layout_height="wrap_content"
         android:text="Host IP"
         android:textAppearance="?android:attr/textAppearanceMedium" />
-
+
     <EditText
         android:id="@+id/host_ip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/DefaultHost"
-        android:text="@string/DefaultHost" />
-
+        android:hint="cse461.cs.washington.edu"
+        android:text="cse461.cs.washington.edu" />
+
     <TextView
         android:id="@+id/textView2"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="Application Port"
         android:textAppearance="?android:attr/textAppearanceMedium" />
-
+
     <EditText
         android:id="@+id/app_port"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
-        android:hint="@string/DefaultPort"
-        android:text="@string/DefaultPort" >
+        android:hint="46120"
+        android:text="46120" >
 
         <requestFocus />
     </EditText>
-
-    <Button
-        android:id="@+id/goButton"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:onClick="onStart"
-        android:text="Go!" />
-
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content" >
+
+        <Button
+            android:id="@+id/goButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="onStart"
+            android:text="Ping!" />
+
+        <Button
+            android:id="@+id/goButton"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:onClick="whoami"
+            android:text="whoami?" />
+
+    </LinearLayout>
+    
     <TextView
         android:id="@+id/output"
         android:layout_width="match_parent"
         android:layout_height="match_parent"
-        android:text="  "
-        android:textSize="10pt" />
+        android:text="  " />
 
 </LinearLayout>
