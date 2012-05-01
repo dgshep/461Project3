@@ -114,7 +114,7 @@ public class AndroidPingActivity extends Activity {
 		}
 		output.append("Average (msec): " + ((double)overall) / runs + "\n");
 		if (!socket.isClosed()) socket.close();
-		output.append("Socket Closed!");
+		output.append("Socket Closed.");
     }
 
     /**
