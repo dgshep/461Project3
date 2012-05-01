@@ -8,10 +8,12 @@ import java.util.Properties;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.view.inputmethod.InputMethodManager;
 import android.widget.EditText;
 import android.widget.TextView;
 
@@ -25,14 +27,17 @@ public class AndroidPingActivity extends Activity {
 //    private Client mClient;
     private Thread mClientThread;
 	private String mServerHost;
-	private int mServerPort;
+	private String mServerPort;
 	
 	/** Called when the activity is first created.  Establishes the UI.  Reads state information saved by previous runs. */
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.main);
-        
+        InputMethodManager imm = (InputMethodManager)getSystemService(this.INPUT_METHOD_SERVICE);
+        imm.hideSoftInputFromWindow(findViewById(R.id.host_ip).getWindowToken(), 0);
+        imm.hideSoftInputFromWindow(findViewById(R.id.app_port).getWindowToken(), 0);
+
 //        mClient = new Client();
 //        mClient.addListener(this);
 //        
@@ -55,7 +60,7 @@ public class AndroidPingActivity extends Activity {
     	SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
     	SharedPreferences.Editor editor = settings.edit();
     	editor.putString("serverhost", mServerHost);
-    	editor.putInt("serverport", mServerPort);
+    	editor.putString("serverport", mServerPort);
     	editor.commit();
     }
     
@@ -65,7 +70,7 @@ public class AndroidPingActivity extends Activity {
      */
     private boolean readUserInputs() {
         mServerHost = ((TextView)findViewById(R.id.host_ip)).getText().toString();
-        mServerPort = Integer.parseInt(((TextView)findViewById(R.id.app_port)).getText().toString());
+        mServerPort = ((TextView)findViewById(R.id.app_port)).getText().toString();
 //        if(mServerPort != 46100){
 //	        try {
 //	        	mServerInterSymbolTime = mClient.portToIntersymbolTime(mServerPort, Properties.SERVER_INTER_SYMBOL_TIME);
@@ -89,17 +94,14 @@ public class AndroidPingActivity extends Activity {
      * @throws IOException 
      */
     public void onStart(View v) throws IOException, JSONException {
-    	EditText hostIP = ((EditText) findViewById(R.id.host_ip));
-    	EditText appPort = ((EditText) findViewById(R.id.app_port));
+    	readUserInputs();
     	TextView output = (TextView) findViewById(R.id.output);
     	output.setText("");
-    	String targetIP = hostIP.getText().toString();
-    	String targetPort = appPort.getText().toString();
     	int runs = 5;
 		long time;
 		long newTime;
 		long overall = 0;
-		AndroidRPCCallerSocket socket = new AndroidRPCCallerSocket(targetIP, targetIP, targetPort);
+		AndroidRPCCallerSocket socket = new AndroidRPCCallerSocket(mServerHost, mServerHost, mServerPort);
 		for(int i = 0; i < runs; i++){
 			time = System.currentTimeMillis();
 			socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
@@ -109,7 +111,7 @@ public class AndroidPingActivity extends Activity {
 			output.append("Run #" + i + " (msec): " + diff + "\n");
 			if(!socket.isPersistent() && i < runs){
 				socket.close();
-				socket = new AndroidRPCCallerSocket(targetIP, targetIP, targetPort);
+				socket = new AndroidRPCCallerSocket(mServerHost, mServerHost, mServerPort);
 			}
 		}
 		output.append("Average (msec): " + ((double)overall) / runs + "\n");
