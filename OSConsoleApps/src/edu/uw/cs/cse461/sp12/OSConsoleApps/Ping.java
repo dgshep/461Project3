@@ -47,23 +47,20 @@ public class Ping implements OSConsoleApp {
 					
 					for(int i = 0; i < runs; i++){
 						time = System.currentTimeMillis();
-						try {
-							socket.invoke("echo", "echo", new JSONObject().put("msg", "") );
-						} catch(IOException e){
-							socket.close();
-							socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
-							time = System.currentTimeMillis();
-							socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
-						}
+						socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
 						newTime = System.currentTimeMillis();
 						long diff = newTime - time;
 						overall += diff;
 						System.out.println("Run #" + i + " (msec): " + diff);
+						if(!socket.isPersistent() && i < runs){
+							socket.close();
+							socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
+						}
 						//socket.close();
 						//socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
 					}
 					System.out.println("Average (msec): " + ((double)overall) / runs);
-					break;
+					socket.close();
 				} catch (Exception e) {
 					System.out.println("Exception: " + e.getMessage());
 					break;

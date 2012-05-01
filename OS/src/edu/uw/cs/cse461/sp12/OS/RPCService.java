@@ -1,5 +1,6 @@
 package edu.uw.cs.cse461.sp12.OS;
 
+import java.io.EOFException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.ServerSocket;
@@ -151,7 +152,7 @@ public class RPCService extends RPCCallable {
 		private int id;
 		
 		public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
-			System.out.println("connection made");
+			//System.out.println("connection made");
 			handler = new TCPMessageHandler(user);
 			listening = true;
 			handshook = false;
@@ -165,6 +166,8 @@ public class RPCService extends RPCCallable {
 			while(!user.isClosed()) {
 				try {
 					parseMessage(handler.readMessageAsJSONObject());
+				} catch (IOException e) {
+					break; //Socket has been closed on the other end.
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.out.println(e.getMessage());

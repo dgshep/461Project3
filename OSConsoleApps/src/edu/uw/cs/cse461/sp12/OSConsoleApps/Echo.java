@@ -41,7 +41,7 @@ public class Echo implements OSConsoleApp {
 					//System.out.println(targetIP + " " + targetPort + " " + msg);
 					RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
 					JSONObject response = socket.invoke("echo", "echo", new JSONObject().put("msg", msg) );
-					
+					socket.close();
 					System.out.println(response.getString("msg"));
 					
 				} catch (Exception e) {

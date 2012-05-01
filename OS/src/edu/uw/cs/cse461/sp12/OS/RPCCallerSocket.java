@@ -26,7 +26,7 @@ public class RPCCallerSocket extends Socket {
 	private String mRemoteHost;
 	private int id = 1;
 	private boolean persistent;
-	private boolean closed;
+	private boolean expired;
 	
 	/**
 	 * Create a socket for sending RPC invocations, connecting it to the specified remote ip and port.
@@ -38,12 +38,11 @@ public class RPCCallerSocket extends Socket {
 	 */
 	public RPCCallerSocket(String hostname, String ip, String port) throws IOException, JSONException {
 		super(ip, Integer.parseInt(port));
-
 		mRemoteHost = hostname;
 		String time = OS.config().getProperty("rpc.timeout");
 		int rpcTimeout = Integer.parseInt(time);  
 		this.setSoTimeout(rpcTimeout);
-		closed = false;
+		expired = false;
 		tcpHandler = null;
 		tcpHandler = new TCPMessageHandler(this);
 		handShake();
@@ -54,9 +53,7 @@ public class RPCCallerSocket extends Socket {
 	 */
 	@Override
 	public void close() throws IOException {
-		if(!persistent){
-			super.close();
-		}
+		super.close();
 	}
 	public boolean isPersistent() {
 		return persistent;
@@ -78,7 +75,7 @@ public class RPCCallerSocket extends Socket {
 		try{
 			String contype = reply.getString("connection");
 			persistent = contype.equals("keep-alive");
-			System.out.println("Persistent Connection!");
+			//System.out.println("Persistent Connection!");
 		} catch(JSONException e) {
 			persistent = false;
 		}
@@ -102,7 +99,7 @@ public class RPCCallerSocket extends Socket {
 	 * @throws IOException 
 	 */
 	public JSONObject invoke(String service, String method, JSONObject userRequest) throws JSONException, IOException {
-		if(closed) {
+		if(expired) {
 			throw new IOException("This is not a persistent connection!");
 		}
 		JSONObject invokation = new JSONObject();
@@ -124,7 +121,7 @@ public class RPCCallerSocket extends Socket {
 					+ out.getString("message"));
 		}
 		if(!persistent){
-			closed = true;
+			expired = true;
 		}
 		return output;
 
