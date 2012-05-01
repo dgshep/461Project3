@@ -15,8 +15,9 @@ public final class R {
     }
     public static final class id {
         public static final int app_port=0x7f050003;
-        public static final int button1=0x7f050004;
+        public static final int goButton=0x7f050004;
         public static final int host_ip=0x7f050001;
+        public static final int output=0x7f050005;
         public static final int textView1=0x7f050000;
         public static final int textView2=0x7f050002;
     }

@@ -10,14 +10,14 @@
         android:layout_height="wrap_content"
         android:text="Host IP"
         android:textAppearance="?android:attr/textAppearanceMedium" />
-
+
     <EditText
         android:id="@+id/host_ip"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:ems="10"
         android:hint="cse461.cs.washington.edu"
-        android:text="461cse.cs.washington.edu" />
+        android:text="cse461.cs.washington.edu" />
 
     <TextView
         android:id="@+id/textView2"
@@ -36,11 +36,18 @@
 
         <requestFocus />
     </EditText>
-
+
     <Button
-        android:id="@+id/button1"
+        android:id="@+id/goButton"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:onClick="onStart"
         android:text="Go!" />
+
+    <TextView
+        android:id="@+id/output"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:text="  " />
 
 </LinearLayout>

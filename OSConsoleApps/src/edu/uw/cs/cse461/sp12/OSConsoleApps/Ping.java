@@ -60,7 +60,7 @@ public class Ping implements OSConsoleApp {
 						//socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
 					}
 					System.out.println("Average (msec): " + ((double)overall) / runs);
-					socket.close();
+					if(!socket.isClosed()) socket.close();
 				} catch (Exception e) {
 					System.out.println("Exception: " + e.getMessage());
 					break;

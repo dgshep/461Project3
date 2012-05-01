@@ -1,24 +1,31 @@
 package android.ping;
 
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.Properties;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 
 import android.app.Activity;
 import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.view.View;
+import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
-import android.widget.ToggleButton;
+
+
 
 public class AndroidPingActivity extends Activity {
 	public static final String TAG = "AndroidPingActivity";
     public static final String PREFS_NAME = "CSE461";
+    private final String configFilename = "foo.bar.config.ini";
 
 //    private Client mClient;
     private Thread mClientThread;
 	private String mServerHost;
 	private int mServerPort;
-	private int mServerInterSymbolTime;
 	
 	/** Called when the activity is first created.  Establishes the UI.  Reads state information saved by previous runs. */
     @Override
@@ -78,41 +85,34 @@ public class AndroidPingActivity extends Activity {
     /**
      * Start/stop toggle button click handler.  (The association of a button click with the 
      * invocation of this routine is made in the layout object.)
+     * @throws JSONException 
+     * @throws IOException 
      */
-    public void onToggleClicked(View v) {
-//    	if (((ToggleButton)v).isChecked()) {
-//			((TextView)findViewById(R.id.asyncText)).setText("");
-//			((TextView)findViewById(R.id.syncedText)).setText("");
-//			if ( !readUserInputs() ) {
-//				((ToggleButton)v).setChecked(false);
-//				return;
-//			}
-//    		// Reading chars sent by server is done in a background thread, so that the UI remains responsive.
-//    		mClientThread = new Thread() {
-//    			public void run() {
-//    				try {
-//        				mClient.reset();
-//    					mClient.connect(mServerHost, mServerPort, mServerPort == Properties.SERVER_PORT_NEGOTIATE, mServerInterSymbolTime);
-//    		    		runOnUiThread(new Runnable() {
-//    		    			public void run() {
-//    		    				ToggleButton startstopToggle = (ToggleButton)findViewById(R.id.toggleStartStop);
-//    		    				startstopToggle.setChecked(false);
-//    		    			}
-//    		    		});
-//    				} catch (IOException e) {
-//    					runOnUiThread( new Runnable() {
-//    						public void run() {
-//    	    					Toast toast = Toast.makeText(getApplicationContext(), "Can't connect to " + mServerHost + ":" + mServerPort, Toast.LENGTH_SHORT);
-//    	    					toast.show();
-//    						}
-//    					});
-//    				}
-//    			}
-//    		};
-//    		mClientThread.start();
-//    	} else {
-//    		if ( mClient != null ) mClient.stop();
-//    	}
+    public void onStart(View v) throws IOException, JSONException {
+    	EditText hostIP = ((EditText) findViewById(R.id.host_ip));
+    	EditText appPort = ((EditText) findViewById(R.id.app_port));
+    	TextView output = (TextView) findViewById(R.id.output);
+    	output.setText("");
+    	String targetIP = hostIP.getText().toString();
+    	String targetPort = appPort.getText().toString();
+    	int runs = 5;
+		long time;
+		long newTime;
+		long overall = 0;
+		AndroidRPCCallerSocket socket = new AndroidRPCCallerSocket(targetIP, targetIP, targetPort);
+		for(int i = 0; i < runs; i++){
+			time = System.currentTimeMillis();
+			socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
+			newTime = System.currentTimeMillis();
+			long diff = newTime - time;
+			overall += diff;
+			output.append("Run #" + i + " (msec): " + diff + "\n");
+			if(!socket.isPersistent() && i < runs){
+				socket.close();
+				socket = new AndroidRPCCallerSocket(targetIP, targetIP, targetPort);
+			}
+		}
+		output.append("Average (msec): " + ((double)overall) / runs);
     }
 
     /**
