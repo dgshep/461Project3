@@ -182,7 +182,6 @@ public class RPCService extends RPCCallable {
 						reply.put("host", "");
 						reply.put("callid", json.getInt("id"));
 						reply.put("type", "OK");
-						
 						try{
 							json.getString("connection").equals("keep-alive");
 							reply.put("connection", "keep-alive");
