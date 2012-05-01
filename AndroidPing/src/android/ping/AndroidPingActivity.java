@@ -113,6 +113,7 @@ public class AndroidPingActivity extends Activity {
 			}
 		}
 		output.append("Average (msec): " + ((double)overall) / runs);
+		if (!socket.isClosed()) socket.close();
     }
 
     /**
