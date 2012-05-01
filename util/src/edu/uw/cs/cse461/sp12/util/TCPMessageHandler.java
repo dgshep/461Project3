@@ -159,7 +159,7 @@ public class TCPMessageHandler {
 			while ( totalRead < nBytes) {
 				int nRead = mIS.read(buf, totalRead, nBytes-totalRead);
 				if ( nRead < 0 ) {
-					if ( totalRead == 0 ) throw new EOFException("EOF reached");
+					if ( totalRead == 0 ) throw new EOFException(TAG + ": EOF reached");
 					throw new IOException("TCPMessageHandler.readFromStream: EOF reached after " + totalRead + " bytes, but " + nBytes + " requested");
 				}
 				// debug ----------
