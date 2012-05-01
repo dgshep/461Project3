@@ -17,6 +17,8 @@ import android.widget.TextView;
 
 import edu.uw.cs.cse461.sp12.OS.OS;
 import edu.uw.cs.cse461.sp12.OS.RPCCallerSocket;
+import edu.uw.cs.cse461.sp12.OS.RPCService;
+import edu.uw.cs.cse461.sp12.util.Log;
 
 
 
@@ -46,16 +48,6 @@ public class AndroidPingActivity extends Activity {
 			e.printStackTrace();
 		}
 		OS.startServices(OS.rpcServiceClasses);
-//        mClient = new Client();
-//        mClient.addListener(this);
-//        
-//        SharedPreferences settings = getSharedPreferences(PREFS_NAME,0);
-//        mServerHost = settings.getString("serverhost", Properties.SERVER_HOST);
-//        int defaultPort = Properties.SERVER_PORT_NEGOTIATE + Properties.SERVER_PORT_INTERSYMBOL_TIME_VEC.length;
-//        mServerPort = settings.getInt("serverport", defaultPort );
-//        
-//        ((TextView)findViewById(R.id.hostText)).setText(mServerHost);
-//        ((TextView)findViewById(R.id.portText)).setText(new Integer(mServerPort).toString());
     }
 
     /**
@@ -129,6 +121,10 @@ public class AndroidPingActivity extends Activity {
     public void whoami(View v) throws IOException, JSONException {
     	TextView output = (TextView) findViewById(R.id.output);
     	output.setText("");
+    	try {
+			RPCService rpcService = (RPCService)OS.getService("rpc");
+			output.append("IP: " + rpcService.localIP() + "  Port: " + rpcService.localPort());
+		} catch (Exception e) {}
     }
     
     /**
