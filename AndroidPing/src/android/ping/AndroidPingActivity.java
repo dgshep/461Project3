@@ -108,11 +108,9 @@ private String mServerPort;
 		long time;
 		long newTime;
 		long overall = 0;
-		int portNum = 0;
 		RPCCallerSocket socket;
 		try {
-			portNum = Integer.parseInt(mServerPort);
-			socket = new RPCCallerSocket(mServerHost, mServerHost, portNum);
+			socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
 		} catch(UnknownHostException e){
 			output.append("Unknown Host!");
 			return;
@@ -132,7 +130,7 @@ private String mServerPort;
 			output.append("Run #" + i + " (msec): " + diff + "\n");
 			if(!socket.isPersistent() && i < runs){
 				socket.close();
-				socket = new RPCCallerSocket(mServerHost, mServerHost, portNum);
+				socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
 			}
 		}
 		output.append("Average (msec): " + ((double)overall) / runs + "\n");

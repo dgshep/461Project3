@@ -34,8 +34,9 @@ public class Ping implements OSConsoleApp {
 					System.out.print("Enter the RPC port, or empty line to exit: ");
 					String targetPort = console.readLine();
 					if ( targetPort == null || targetPort.isEmpty() ) continue;
+					RPCCallerSocket socket;
 					try {
-						RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
+						socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
 					} catch(NumberFormatException e) {
 						continue;
 					}
@@ -43,7 +44,6 @@ public class Ping implements OSConsoleApp {
 					long newTime = time;
 					long overall = 0;
 					int runs = 5;
-					
 					for(int i = 0; i < runs; i++){
 						time = System.currentTimeMillis();
 						socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
