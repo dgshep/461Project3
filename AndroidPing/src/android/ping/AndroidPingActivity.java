@@ -84,7 +84,7 @@ public class AndroidPingActivity extends Activity {
     
     /**
      * Start/stop toggle button click handler.  (The association of a button click with the 
-     * invocation of this routine is made in the layout object.)
+     * invocation of this routine is made in the layout object.) This runs the Ping protocol
      * @throws JSONException 
      * @throws IOException 
      */
@@ -112,8 +112,9 @@ public class AndroidPingActivity extends Activity {
 				socket = new AndroidRPCCallerSocket(targetIP, targetIP, targetPort);
 			}
 		}
-		output.append("Average (msec): " + ((double)overall) / runs);
+		output.append("Average (msec): " + ((double)overall) / runs + "\n");
 		if (!socket.isClosed()) socket.close();
+		output.append("Socket Closed.");
     }
 
     /**
