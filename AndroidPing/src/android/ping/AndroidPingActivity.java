@@ -84,46 +84,55 @@ public class AndroidPingActivity extends Activity {
      * @throws IOException 
      */
     public void onStart(View v) throws IOException, JSONException {
-    	readUserInputs();
     	TextView output = (TextView) findViewById(R.id.output);
     	output.setText("");
-    	int runs = 5;
-		long time;
-		long newTime;
-		long overall = 0;
-		RPCCallerSocket socket;
-		try {
-			socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
-		} catch(UnknownHostException e){
-			output.append("Unknown Host!");
-			return;
-		} catch(SocketException e){
-			output.append(e.getMessage());
-			return;
-		} catch(NumberFormatException e){
-			output.append("Not a valid port number!");
-			return;
-		} catch(Exception e){
-			output.append(e.getMessage());
-			return;
-		}
-		for(int i = 0; i < runs; i++){
-			time = System.currentTimeMillis();
-			socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
-			newTime = System.currentTimeMillis();
-			long diff = newTime - time;
-			overall += diff;
-			output.append("Run #" + i + " (msec): " + diff + "\n");
-			if(!socket.isPersistent() && i < runs){
-				socket.close();
-				socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
-			}
-		}
-		output.append("Average (msec): " + ((double)overall) / runs + "\n");
-		if (!socket.isClosed()) socket.close();
-		output.append("Socket Closed.");
+    	Thread pingThread = new Thread(){
+    		public void run(){
+    			readUserInputs();
+    	    	int runs = 5;
+    			long time;
+    			long newTime;
+    			long overall = 0;
+    			RPCCallerSocket socket;
+    			try {
+    				socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
+    			} catch(UnknownHostException e){
+    				runOnUiThread(new outputUpdater("Unknown Host!"));
+    				return;
+    			} catch(SocketException e){
+    				runOnUiThread(new outputUpdater(e.getMessage()));
+    				return;
+    			} catch(NumberFormatException e){
+    				runOnUiThread(new outputUpdater("Not a valid port number!"));
+    				return;
+    			} catch(Exception e){
+    				runOnUiThread(new outputUpdater(e.getMessage()));
+    				return;
+    			}
+    			try {
+    				for(int i = 0; i < runs; i++){
+    					time = System.currentTimeMillis();
+    					socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
+    					newTime = System.currentTimeMillis();
+    					long diff = newTime - time;
+    					overall += diff;
+    					runOnUiThread(new outputUpdater("Run #" + i + " (msec): " + diff + "\n"));
+    					if(!socket.isPersistent() && i < runs){
+    						socket.close();
+    						socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
+    					}
+    				}
+    				runOnUiThread(new outputUpdater("Average (msec): " + ((double)overall) / runs + "\n"));
+    				if (!socket.isClosed()) socket.close();
+    				runOnUiThread(new outputUpdater("Socket Closed."));
+    			} catch (Exception e) {
+    				runOnUiThread(new outputUpdater(e.getMessage()));
+    				return;
+    			}
+    	    }
+    	};
+    	pingThread.start();
     }
-
     public void whoami(View v) throws IOException, JSONException {
     	TextView output = (TextView) findViewById(R.id.output);
     	output.setText("");
@@ -146,5 +155,18 @@ public class AndroidPingActivity extends Activity {
 			IFCONFIG.append("  Port: " + rpcService.localPort());
 		} catch (Exception e) {}
 		output.setText(IFCONFIG);
+    }
+    private class outputUpdater implements Runnable {
+    	String output;
+    	TextView v;
+    	public outputUpdater(String output){
+    		this.output = output;
+    		v = (TextView)findViewById(R.id.output);
+    	}
+		@Override
+		public void run() {
+			v.append(output);
+		}
+    	
     }
 }
