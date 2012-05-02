@@ -1,8 +1,11 @@
 package android.ping;
 
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.net.UnknownHostException;
+import java.util.Enumeration;
 import java.util.Properties;
 
 import org.json.JSONException;
@@ -100,6 +103,9 @@ public class AndroidPingActivity extends Activity {
 		} catch(NumberFormatException e){
 			output.append("Not a valid port number!");
 			return;
+		} catch(Exception e){
+			output.append(e.getMessage());
+			return;
 		}
 		for(int i = 0; i < runs; i++){
 			time = System.currentTimeMillis();
@@ -121,10 +127,25 @@ public class AndroidPingActivity extends Activity {
     public void whoami(View v) throws IOException, JSONException {
     	TextView output = (TextView) findViewById(R.id.output);
     	output.setText("");
-    	try {
+		StringBuilder IFCONFIG=new StringBuilder();
+		try {
+		for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	                InetAddress inetAddress = enumIpAddr.nextElement();
+	                if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
+	                IFCONFIG.append(inetAddress.getHostAddress().toString());
+	                }
+	            }
+	        }
+	    } catch (SocketException ex) {
+	        Log.e("LOG_TAG", ex.toString());
+	    }
+	    try {
 			RPCService rpcService = (RPCService)OS.getService("rpc");
-			output.append("IP: " + rpcService.localIP() + "  Port: " + rpcService.localPort());
+			IFCONFIG.append("  Port: " + rpcService.localPort());
 		} catch (Exception e) {}
+		output.setText(IFCONFIG);
     }
     
     /**
