@@ -142,7 +142,7 @@ public class AndroidPingActivity extends Activity {
 	            NetworkInterface intf = en.nextElement();
 	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
 	                InetAddress inetAddress = enumIpAddr.nextElement();
-	                if (!inetAddress.isLoopbackAddress() && !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
+	                if (!inetAddress.isLoopbackAddress()){ //&& !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
 	                IFCONFIG.append(inetAddress.getHostAddress().toString());
 	                }
 	            }

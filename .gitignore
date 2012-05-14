@@ -1,0 +1,10 @@
+*/bin/
+*/doc
+AndroidPing/gen/
+.metadata
+OSConsoleApps.jardesc
+*/doc
+doc
+*.jardesc
+*.jar
+.classpath
