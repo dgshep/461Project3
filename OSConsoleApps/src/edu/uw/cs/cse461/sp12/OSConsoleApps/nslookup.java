@@ -5,6 +5,7 @@ import java.io.InputStreamReader;
 
 import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoAddressException;
 import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoSuchNameException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException;
 import edu.uw.cs.cse461.sp12.OS.DDNSRRecord;
 import edu.uw.cs.cse461.sp12.OS.DDNSResolverService;
 import edu.uw.cs.cse461.sp12.OS.OS;
@@ -46,7 +47,6 @@ public class nslookup extends RPCCallable {
 	 * Fetches the resource record for a name, using the locally running DDNS name resolver service.
 	 * (All systems are required to run a name resolver.)
 	 */
-	@Override
 	public void run() {
 		try {
 			// Eclipse doesn't support System.console()

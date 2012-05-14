@@ -87,7 +87,7 @@ public class HTTPDService extends RPCCallable {
 
 	public HTTPDService() throws IOException {
 		
-		int port = OS.config().getInt("httpd.port", 0, 0, TAG);
+		int port = Integer.parseInt(OS.config().getProperty(""));//.getInt("httpd.port", 0, 0, TAG); //TODO
 		this.mNanoService = new NanoHTTPDService(port);
 		port = mNanoService.localPort();
 
