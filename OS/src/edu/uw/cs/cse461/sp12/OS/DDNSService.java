@@ -14,6 +14,10 @@ public class DDNSService extends RPCCallable {
 	private RPCCallableMethod<DDNSService> unregister;
 	private RPCCallableMethod<DDNSService> resolve;
 	
+	
+	
+	private static final String PASSWORD = "champ";
+	
 	public DDNSService() throws Exception {
 		register = new RPCCallableMethod<DDNSService>(this, "_register");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "register", register);
@@ -30,18 +34,12 @@ public class DDNSService extends RPCCallable {
 
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
-		
+		// Nothing to do here
 	}
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
-		// We can't assume the underlying implementation won't modify args in some way that is
-		// incompatible with return value, so have to make a copy of the args.
-		
-		// ANDROID INCOMPATIBILITY
-		//JSONObject result = new JSONObject(args, JSONObject.getNames(args));
-		
 		JSONObject result = new JSONObject();
+		
 		return result;
 	}
 	
