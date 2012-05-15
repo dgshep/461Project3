@@ -4,8 +4,8 @@
 	<classpathentry kind="src" path="utilSrc"/>
 	<classpathentry kind="src" path="osSrc"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.6"/>
-	<classpathentry kind="lib" path="/Users/Davis/Dropbox/Spring12/CSE461/461Project3/lib/commons-cli-1.2.jar"/>
-	<classpathentry kind="lib" path="/Users/Davis/Dropbox/Spring12/CSE461/461Project3/lib/org.json.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Matt/git/461-Projects/lib/commons-cli-1.2.jar"/>
+	<classpathentry kind="lib" path="C:/Users/Matt/git/461-Projects/lib/org.json.jar"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.ANDROID_FRAMEWORK"/>
 	<classpathentry kind="con" path="com.android.ide.eclipse.adt.LIBRARIES"/>
 	<classpathentry kind="src" path="gen"/>
