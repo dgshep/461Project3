@@ -2,6 +2,7 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Timer;
 import java.util.TimerTask;
@@ -38,9 +39,10 @@ public class DDNSService extends RPCCallable {
 		regThread = new Thread(new Registration());
 		regThread.start();
 		
+		nodes = new HashMap<String, node>();
 		String[] namespace = OS.config().getProperty("ddns.namespace").split(",");
 		for(String s : namespace) {
-			
+			nodes.put(s, new node(s, OS.config().getProperty(s)));
 		}
 		
 	}
@@ -63,11 +65,33 @@ public class DDNSService extends RPCCallable {
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
 //		{port:34562, name:"jz.cse461.","password":"jzpassword","ip":"192.168.0.77"}
-		//Store this information into memory
-		//Start keep alive timer
-		//Send response message
-		JSONObject result = new JSONObject();
+		if(args.getString("password").equals(OS.config().getProperty("ddns.password")))
+			return authorizationExep();
+		String hostname = OS.config().getProperty("ddns.hostname");
+		String requestName = args.getString("name");
+		if(!requestName.substring(requestName.length() - 1 - hostname.length()).equals(hostname))
+			return zoneExep();
 		
+		node location = search(requestName);
+		if(location.dirty)
+			return noAddressExep();
+		
+		JSONObject result = new JSONObject();
+		if(location.type.equals("NS") || location.type.equals("CNAME")) {
+			result.put("done", false);
+		} else {
+			result.put("done", false);
+			result.put("lifetime", Integer.parseInt(OS.config().getProperty("lifetime")));
+			try{
+				nodes.get(location.name).dirty = false;
+				nodes.get(location.name).ip = args.getString("ip");
+				nodes.get(location.name).port = args.getInt("port");
+			}catch(Exception e) {
+				return runtimeExep();
+			}
+		}
+		result.put("node", location.toJSON());
+		result.put("resulttype", "registerresult");
 		return result;
 //		{node:[node representation described next], lifetime:600, resulttype:"registerresult", "done":true}
 	}
@@ -76,9 +100,37 @@ public class DDNSService extends RPCCallable {
 		String[] tokens = name.split("\\.");
 		String host = OS.config().getProperty("ddns.hostname");
 		int index = host.split("\\.").length;
-		for(int i = tokens.length - 1; i > 0; i--){
-			
+		for(int i = tokens.length - 1 - index; i >= 0; i--){
+			host = tokens[i] + "." + host;
+			node current = nodes.get(host);
+			if(current.type.equals("NS") || current.type.equals("CNAME")){
+				return current;	
+			}
 		}
+		return nodes.get(host);
+	}
+	
+	private JSONObject noAddressExep() {
+		return null;
+	}
+	
+	private JSONObject authorizationExep() {
+		return null;
+	}
+	
+	private JSONObject noNameExep() {
+		return null;
+	}
+	
+	private JSONObject runtimeExep() {
+		return null;
+	}
+	
+	private JSONObject expiredExep() {
+		return null;
+	}
+	
+	private JSONObject zoneExep() {
 		return null;
 	}
 	
@@ -133,15 +185,29 @@ public class DDNSService extends RPCCallable {
 		private String ip;
 		private int port;
 		private String name;
+		private String type;
+		private String alias;
 		private boolean dirty;
 		
-		public node(String name){
+		public node(String name, String type){
 			this.name = name;
+			this.type = type;
 			dirty = true;
 			port = 0;
 			ip = "";
 		}
 		
-		
+		public JSONObject toJSON() throws JSONException {
+			JSONObject result = new JSONObject();
+			result.put("name", name);
+			result.put("type", type);
+			if(type.equals("NS"))
+				result.put("type", type);
+			else {
+				result.put("ip", ip);
+				result.put("port", port);
+			}
+			return result;
+		}
 	}
 }
