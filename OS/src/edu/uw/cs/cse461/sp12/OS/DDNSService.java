@@ -19,6 +19,9 @@ public class DDNSService extends RPCCallable {
 	private static final String PASSWORD = "champ";
 	
 	public DDNSService() throws Exception {
+		//Read in config file for tree
+		//Fill out storage tree
+		
 		register = new RPCCallableMethod<DDNSService>(this, "_register");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "register", register);
 		unregister = new RPCCallableMethod<DDNSService>(this, "_unregister");
@@ -38,17 +41,28 @@ public class DDNSService extends RPCCallable {
 	}
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
+//		{port:34562, name:"jz.cse461.","password":"jzpassword","ip":"192.168.0.77"}
+		//Store this information into memory
+		//Start keep alive timer
+		//Send response message
 		JSONObject result = new JSONObject();
 		
 		return result;
+//		{node:[node representation described next], lifetime:600, resulttype:"registerresult", "done":true}
 	}
 	
 	public JSONObject _unregister(JSONObject args) throws JSONException, IOException {
+//		unregister() works exactly like register(), except for two things. First, it marks 
+//		the node as having no current address rather than updating its address. Second, 
+//		if done is true, no node is returned.
+		//Remove info from storage
 		JSONObject result = new JSONObject();
 		return result;
 	}
 	
 	public JSONObject _resolve(JSONObject args) throws JSONException, IOException {
+		//Look up name in storage
+		//Send result
 		JSONObject result = new JSONObject();
 		return result;
 	}
