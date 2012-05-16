@@ -43,6 +43,9 @@ public class RPCCallerSocket extends Socket {
 		tcpHandler = new TCPMessageHandler(this);
 		handShake();
 	}
+	public RPCCallerSocket(String hostname, String ip, int port) throws IOException, JSONException {
+		this(hostname, ip, port + "");
+	}
 	
 	/**
 	 * Close this socket.
