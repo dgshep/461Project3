@@ -28,6 +28,13 @@ public class DDNSService extends RPCCallable {
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "unregister", unregister);
 		resolve = new RPCCallableMethod<DDNSService>(this, "_resolve");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "resolve", resolve);
+		
+		RPCCallerSocket register = new RPCCallerSocket(OS.config().getProperty("ddns.rootserver"), 
+				OS.config().getProperty("ddns.rootserver"), OS.config().getProperty("ddns.rootport"));	
+		JSONObject request = new JSONObject();
+		
+		register.invoke("ddns", "register", request);
+		
 	}
 	
 	@Override
