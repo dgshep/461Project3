@@ -6,4 +6,4 @@ AndroidPing/gen/
 doc
 *.jardesc
 *.jar
-.classpath
+*.classpath

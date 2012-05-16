@@ -34,12 +34,12 @@
 		<link>
 			<name>osSrc</name>
 			<type>2</type>
-			<location>/Users/Davis/Dropbox/Spring12/CSE461/461Project3/OS/src</location>
+			<location>C:/Users/Matt/git/461Project3/OS/src</location>
 		</link>
 		<link>
 			<name>utilSrc</name>
 			<type>2</type>
-			<location>/Users/Davis/Dropbox/Spring12/CSE461/461Project3/util/src</location>
+			<location>C:/Users/Matt/git/461Project3/util/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>
