@@ -1,5 +1,6 @@
 package android.ping;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -18,9 +19,14 @@ import android.view.View;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
+import edu.uw.cs.cse461.sp12.OS.DDNSException;
+import edu.uw.cs.cse461.sp12.OS.DDNSRRecord;
+import edu.uw.cs.cse461.sp12.OS.DDNSResolverService;
 import edu.uw.cs.cse461.sp12.OS.OS;
 import edu.uw.cs.cse461.sp12.OS.RPCCallerSocket;
 import edu.uw.cs.cse461.sp12.OS.RPCService;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoAddressException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoSuchNameException;
 import edu.uw.cs.cse461.sp12.util.Log;
 
 
@@ -40,17 +46,24 @@ public class AndroidPingActivity extends Activity {
         setContentView(R.layout.main);
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        
         Properties config = new Properties();
         config.put("host.name", "foo.bar.");
         config.put("rpc.timeout", "10000");
+        config.put("ddns.cachettl", "60");
+        config.put("ddns.rootserver", "cse461.cs.washington.edu");
+        config.put("ddns.rootport", "46130");
+        config.put("ddns.password", "champ");
+        config.put("rpc.serverport", "46120");
+        config.put("host.name", "galaxy.hallshep.cse461");
 		// boot the OS and load RPC services
 		try {
 			OS.boot(config);
+		} catch (RuntimeException r){
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+			throw new IllegalStateException("OS Hasn't booted!");
 		}
-		OS.startServices(OS.rpcServiceClasses);
+		OS.startServices(OS.androidServiceClasses);
     }
 
     /**
@@ -94,21 +107,12 @@ public class AndroidPingActivity extends Activity {
     			long newTime;
     			long overall = 0;
     			RPCCallerSocket socket;
-    			try {
-    				socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
-    			} catch(UnknownHostException e){
-    				runOnUiThread(new outputUpdater("Unknown Host!"));
-    				return;
-    			} catch(SocketException e){
-    				runOnUiThread(new outputUpdater(e.getMessage()));
-    				return;
-    			} catch(NumberFormatException e){
-    				runOnUiThread(new outputUpdater("Not a valid port number!"));
-    				return;
-    			} catch(Exception e){
-    				runOnUiThread(new outputUpdater(e.getMessage()));
-    				return;
-    			}
+    			socket = getSocket();
+    			if(socket == null) return;
+    			String host = socket.remotehost();
+				String ip = socket.getInetAddress().getHostAddress();
+				int port = socket.getPort();
+				runOnUiThread(new outputUpdater("Pinging " + host + " @ " + ip + ":" + port + "\n\n"));
     			try {
     				for(int i = 0; i < runs; i++){
     					time = System.currentTimeMillis();
@@ -119,7 +123,7 @@ public class AndroidPingActivity extends Activity {
     					runOnUiThread(new outputUpdater("Run #" + i + " (msec): " + diff + "\n"));
     					if(!socket.isPersistent() && i < runs){
     						socket.close();
-    						socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
+    						socket = new RPCCallerSocket(host, ip, port);
     					}
     				}
     				runOnUiThread(new outputUpdater("Average (msec): " + ((double)overall) / runs + "\n"));
@@ -133,25 +137,43 @@ public class AndroidPingActivity extends Activity {
     	};
     	pingThread.start();
     }
+    private RPCCallerSocket getSocket(){
+    	RPCCallerSocket socket;
+    	try {
+			socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
+		} catch(UnknownHostException e){
+			DDNSRRecord record = null;
+			try {
+				record = ((DDNSResolverService) OS.getService("ddnsresolver")).resolve(mServerHost);
+			} catch (DDNSNoAddressException nae) {
+				runOnUiThread(new outputUpdater("No address is currently assoicated with the name: " + mServerHost + "\n"));
+				return null;
+			} catch (DDNSNoSuchNameException nsne) {
+				runOnUiThread(new outputUpdater("No such name: " + mServerHost  + "\n"));
+				return null;
+			} catch (Exception genE) {
+				runOnUiThread(new outputUpdater("Exception: " + genE.getMessage() + "\n"));
+				return null;
+			}
+			try {
+				socket = new RPCCallerSocket(mServerHost, record.host, record.port);
+			} catch (Exception e1) {
+				e1.printStackTrace();
+				return null;
+			} 
+		} catch (Exception e2) {
+			runOnUiThread(new outputUpdater(e2.getMessage()));
+			return null;
+		}
+		return socket;
+    }
     public void whoami(View v) throws IOException, JSONException {
     	TextView output = (TextView) findViewById(R.id.output);
     	output.setText("");
 		StringBuilder IFCONFIG=new StringBuilder();
-		try {
-		for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
-	            NetworkInterface intf = en.nextElement();
-	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
-	                InetAddress inetAddress = enumIpAddr.nextElement();
-	                if (!inetAddress.isLoopbackAddress()){ //&& !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
-	                IFCONFIG.append(inetAddress.getHostAddress().toString());
-	                }
-	            }
-	        }
-	    } catch (SocketException ex) {
-	        Log.e("LOG_TAG", ex.toString());
-	    }
-	    try {
-			RPCService rpcService = (RPCService)OS.getService("rpc");
+		RPCService rpcService = (RPCService)OS.getService("rpc");
+		IFCONFIG.append(rpcService.localIP());
+	    try {	
 			IFCONFIG.append("  Port: " + rpcService.localPort());
 		} catch (Exception e) {}
 		output.setText(IFCONFIG);
@@ -165,7 +187,7 @@ public class AndroidPingActivity extends Activity {
     	}
 		@Override
 		public void run() {
-			v.append(output);
+			if(output != null) v.append(output);
 		}
     	
     }
