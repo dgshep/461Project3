@@ -20,7 +20,6 @@ public class DDNSService extends RPCCallable {
 	private RPCCallableMethod<DDNSService> resolve;
 	
 	private RPCCallerSocket root;
-	private Thread regThread;
 	private Map<String, Node> nodes;
 	
 	public DDNSService() throws Exception {
@@ -36,8 +35,7 @@ public class DDNSService extends RPCCallable {
 		
 		root = new RPCCallerSocket(OS.config().getProperty("ddns.rootserver"), 
 				OS.config().getProperty("ddns.rootserver"), OS.config().getProperty("ddns.rootport"));
-		regThread = new Thread(new Registration());
-		regThread.start();
+		
 		
 		nodes = new HashMap<String, Node>();
 		String[] namespace = OS.config().getProperty("ddns.namespace").split(",");
@@ -184,6 +182,7 @@ public class DDNSService extends RPCCallable {
 		String[] tokens = name.split("\\.");
 		String host = OS.config().getProperty("ddns.hostname");
 		int index = host.split("\\.").length;
+		
 		for(int i = tokens.length - 1 - index; i >= 0; i--){
 			host = tokens[i] + "." + host;
 			Node current = nodes.get(host);
@@ -258,36 +257,6 @@ public class DDNSService extends RPCCallable {
 			result.put("message", "the name supplied (" + name + ") does not exist in this namespace");
 			return result;
 			}catch(Exception e) {return null;}
-	}
-	
-	private class Registration implements Runnable {
-
-		@Override
-		public void run() {
-			try {
-				while(!root.isClosed()){
-					JSONObject register = new JSONObject();
-					register.put("name", OS.config().getProperty("ddns.hostname"));
-					register.put("port", ((RPCService)OS.getService("rpc")).localPort());
-					register.put("password", OS.config().getProperty("ddns.password"));
-					register.put("ip", ((RPCService)OS.getService("rpc")).localIP());
-					JSONObject ttl = root.invoke("ddns", "register", register);
-					Timer t = new Timer();
-					t.schedule(new wakeup(), ttl.getInt("lifetime") - 5000);
-					wait();
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-	}
-	
-	private class wakeup extends TimerTask {
-		@Override
-		public void run() {
-			regThread.notify();
-		}
 	}
 	
 	private class Node {

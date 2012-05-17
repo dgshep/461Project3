@@ -3,12 +3,15 @@ package edu.uw.cs.cse461.sp12.OS;
 import java.io.FileInputStream;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
+import org.json.JSONObject;
 
 import edu.uw.cs.cse461.sp12.util.Log;
 
@@ -46,6 +49,8 @@ public class OS {
 	private static Properties mConfig;
 	private static String mHostname;
 	
+	private static Thread regThread;
+	
 	/**
 	 * Brings up the OS.  Doesn't start any services.  Call startServices() for that.
 	 * 
@@ -64,11 +69,44 @@ public class OS {
 		if ( mHostname == null ) throw new RuntimeException("OS: no hostname in config file");
 		if ( mHostname.equals(".") ) mHostname = "";
 		else if ( mHostname.endsWith(".") ) mHostname = mHostname.substring(0,mHostname.length()-1);
+		
 		DDNSFullName ddnsName = new DDNSFullName(mHostname);
 		
 		mAmShutdown = false; // at this point, we're up, but with no services running
 	}
 
+	private class Registration implements Runnable {
+
+		private DDNSFullName name;
+		
+		public Registration(DDNSFullName name) {
+			this.name = name;
+		}
+		
+		@Override
+		public void run() {
+			try {
+				while(!mAmShutdown){
+					int ttl = ((DDNSResolverService)serviceMap.get("ddnsresolver")).register(name, 
+						Integer.parseInt(mConfig.getProperty("ddns.rootport")));
+					Timer t = new Timer();
+					t.schedule(new wakeup(), ttl - (int)(ttl * .5));
+					wait();
+				}
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+		}
+		
+	}
+	
+	private class wakeup extends TimerTask {
+		@Override
+		public void run() {
+			regThread.notify();
+		}
+	}
+	
 	/**
 	 * Starts "OS resident" services.  The argument is an array of class names.
 	 * Two useful lists are included as static OS class variables: rpcServiceClasses
@@ -90,6 +128,8 @@ public class OS {
 				serviceMap.put(service.servicename(), service);
 				Log.i(TAG, serviceClassname + " started");
 			}
+//			regThread = new Thread(new Registration());
+//			regThread.start();
 		} catch (Exception e) {
 			Log.e(TAG, "Error while starting service " + startingService + ": " + e.getMessage());
 			shutdown();
