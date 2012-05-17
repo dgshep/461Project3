@@ -65,36 +65,59 @@ public class DDNSService extends RPCCallable {
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
 //		{port:34562, name:"jz.cse461.","password":"jzpassword","ip":"192.168.0.77"}
-		if(args.getString("password").equals(OS.config().getProperty("ddns.password")))
-			return authorizationExep();
-		String hostname = OS.config().getProperty("ddns.hostname");
-		String requestName = args.getString("name");
-		if(!requestName.substring(requestName.length() - 1 - hostname.length()).equals(hostname))
-			return zoneExep();
-		
-		Node location = search(requestName);
-		JSONObject result = new JSONObject();
-		if(location == null){
-			noNameExep();
-		}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
-			if(location.dirty)
-				return noAddressExep();
-			result.put("done", false);
-		} else {
-			result.put("done", false);
-			result.put("lifetime", Integer.parseInt(OS.config().getProperty("lifetime")));
-			try{
-				nodes.get(location.name).dirty = false;
-				nodes.get(location.name).ip = args.getString("ip");
-				nodes.get(location.name).port = args.getInt("port");
-			}catch(Exception e) {
-				return runtimeExep();
+		JSONObject pw = checkPW(args);
+		JSONObject check = checkArgs(args);
+		if(check != null)
+			return check;
+		else if(pw != null)
+			return pw;
+		else{
+			Node location = search(args.getString("name"));
+			JSONObject result = new JSONObject();
+			if(location == null){
+				noNameExep();
+			}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
+				if(location.dirty)
+					return noAddressExep();
+				result.put("done", false);
+			} else {
+				result.put("done", true);
+				result.put("lifetime", Integer.parseInt(OS.config().getProperty("lifetime")));
+				try{
+					nodes.get(location.name).dirty = false;
+					nodes.get(location.name).ip = args.getString("ip");
+					nodes.get(location.name).port = args.getInt("port");
+				}catch(Exception e) {
+					return runtimeExep();
+				}
 			}
+			result.put("node", location.toJSON());
+			result.put("resulttype", "registerresult");
+			return result;
 		}
-		result.put("node", location.toJSON());
-		result.put("resulttype", "registerresult");
-		return result;
 //		{node:[node representation described next], lifetime:600, resulttype:"registerresult", "done":true}
+	}
+	
+	private JSONObject checkPW(JSONObject args) {
+		try {
+			if(args.getString("password").equals(OS.config().getProperty("ddns.password")))
+				return authorizationExep();
+			return null;
+		} catch (JSONException e) {
+			return runtimeExep();
+		}
+	}
+	
+	private JSONObject checkArgs(JSONObject args) {
+		try {
+			String hostname = OS.config().getProperty("ddns.hostname");
+			String requestName = args.getString("name");
+			if(!requestName.substring(requestName.length() - 1 - hostname.length()).equals(hostname))
+				return zoneExep();
+			return null;
+		} catch (JSONException e) {
+			return runtimeExep();
+		}
 	}
 	
 	private Node search(String name) {
@@ -111,28 +134,70 @@ public class DDNSService extends RPCCallable {
 		return nodes.get(host);
 	}
 	
-	private JSONObject noAddressExep() {
-		return null;
+	private JSONObject noAddressExep(String name) {
+		try{
+		JSONObject result = new JSONObject();
+		result.put("resulttype", "ddnsexception");
+		result.put("exceptionnum", 2);
+		result.put("name", name);
+		result.put("message", "");
+		return result;
+		}catch(Exception e) {return null;}
 	}
 	
-	private JSONObject authorizationExep() {
-		return null;
+	private JSONObject authorizationExep(String name) {
+		try{
+			JSONObject result = new JSONObject();
+			result.put("resulttype", "ddnsexception");
+			result.put("exceptionnum", 3);
+			result.put("name", name);
+			result.put("message", "");
+			return result;
+			}catch(Exception e) {return null;}
 	}
 	
-	private JSONObject noNameExep() {
-		return null;
+	private JSONObject noNameExep(String name) {
+		try{
+			JSONObject result = new JSONObject();
+			result.put("resulttype", "ddnsexception");
+			result.put("exceptionnum", 1);
+			result.put("name", name);
+			result.put("message", "");
+			return result;
+			}catch(Exception e) {return null;}
 	}
 	
-	private JSONObject runtimeExep() {
-		return null;
+	private JSONObject runtimeExep(String name) {
+		try{
+			JSONObject result = new JSONObject();
+			result.put("resulttype", "ddnsexception");
+			result.put("exceptionnum", 4);
+			result.put("name", name);
+			result.put("message", "");
+			return result;
+			}catch(Exception e) {return null;}
 	}
 	
-	private JSONObject expiredExep() {
-		return null;
+	private JSONObject expiredExep(String name) {
+		try{
+			JSONObject result = new JSONObject();
+			result.put("resulttype", "ddnsexception");
+			result.put("exceptionnum", 5);
+			result.put("name", name);
+			result.put("message", "");
+			return result;
+			}catch(Exception e) {return null;}
 	}
 	
-	private JSONObject zoneExep() {
-		return null;
+	private JSONObject zoneExep(String name) {
+		try{
+			JSONObject result = new JSONObject();
+			result.put("resulttype", "ddnsexception");
+			result.put("exceptionnum", 6);
+			result.put("name", name);
+			result.put("message", "");
+			return result;
+			}catch(Exception e) {return null;}
 	}
 	
 	public JSONObject _unregister(JSONObject args) throws JSONException, IOException {
@@ -140,15 +205,57 @@ public class DDNSService extends RPCCallable {
 //		the node as having no current address rather than updating its address. Second, 
 //		if done is true, no node is returned.
 		//Remove info from storage
-		JSONObject result = new JSONObject();
-		return result;
+		JSONObject pw = checkPW(args);
+		JSONObject check = checkArgs(args);
+		if(check != null)
+			return check;
+		else if(pw != null)
+			return pw;
+		else{
+			Node location = search(args.getString("name"));
+			JSONObject result = new JSONObject();
+			if(location == null){
+				noNameExep();
+			}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
+				if(location.dirty)
+					return noAddressExep();
+				result.put("done", false);
+				result.put("node", location.toJSON());
+			} else {
+				result.put("done", true);
+				try{
+					nodes.get(location.name).dirty = true;
+				}catch(Exception e) {
+					return runtimeExep();
+				}
+			}
+			result.put("resulttype", "unregisterresult");
+			return result;
+		}
 	}
 	
 	public JSONObject _resolve(JSONObject args) throws JSONException, IOException {
 		//Look up name in storage
 		//Send result
-		JSONObject result = new JSONObject();
-		return result;
+		JSONObject check = checkArgs(args);
+		if(check != null)
+			return check;
+		else{
+			Node location = search(args.getString("name"));
+			JSONObject result = new JSONObject();
+			if(location == null){
+				noNameExep();
+			}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
+				if(location.dirty)
+					return noAddressExep();
+				result.put("done", false);
+			} else {
+				result.put("done", true);
+			}
+			result.put("node", location.toJSON());
+			result.put("resulttype", "resolveresult");
+			return result;
+		}
 	}
 
 	private class Registration implements Runnable {
