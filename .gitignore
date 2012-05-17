@@ -6,7 +6,3 @@ AndroidPing/gen/
 doc
 *.jardesc
 *.jar
-*.classpath
-OS/.classpath
-OSConsoleApps/.classpath
-util/.classpath
