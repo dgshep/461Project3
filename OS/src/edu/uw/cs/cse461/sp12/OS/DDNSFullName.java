@@ -14,5 +14,14 @@ public class DDNSFullName {
 	public String toString(){
 		return name;
 	}
+	public int hashCode(){
+		return name.hashCode();
+	}
+	public boolean equals(Object o){
+		if(o == null) return false;
+		if(!(o instanceof DDNSFullName)) return false; 
+		DDNSFullName cmp = (DDNSFullName) o;
+		return cmp.name.equals(this.name);
+	}
 
 }

@@ -46,16 +46,19 @@ public class AndroidPingActivity extends Activity {
         setContentView(R.layout.main);
         InputMethodManager imm = (InputMethodManager) getSystemService(INPUT_METHOD_SERVICE);
         imm.hideSoftInputFromWindow(getCurrentFocus().getWindowToken(), 0);
+        bootOS();
         
-        Properties config = new Properties();
-        config.put("host.name", "foo.bar.");
-        config.put("rpc.timeout", "10000");
-        config.put("ddns.cachettl", "60");
-        config.put("ddns.rootserver", "cse461.cs.washington.edu");
-        config.put("ddns.rootport", "46130");
-        config.put("ddns.password", "champ");
-        config.put("rpc.serverport", "46120");
-        config.put("host.name", "galaxy.hallshep.cse461");
+   }
+   private void bootOS(){
+	   Properties config = new Properties();
+       config.put("host.name", "foo.bar.");
+       config.put("rpc.timeout", "10000");
+       config.put("ddns.cachettl", "60");
+       config.put("ddns.rootserver", "cse461.cs.washington.edu");
+       config.put("ddns.rootport", "46130");
+       config.put("ddns.password", "champ");
+       config.put("rpc.serverport", "46120");
+       config.put("host.name", "galaxy.hallshep.cse461");
 		// boot the OS and load RPC services
 		try {
 			OS.boot(config);
@@ -64,7 +67,7 @@ public class AndroidPingActivity extends Activity {
 			throw new IllegalStateException("OS Hasn't booted!");
 		}
 		OS.startServices(OS.androidServiceClasses);
-    }
+   }
 
     /**
      * Called when activity is stopped.  Save user preferences for next execution.
@@ -72,7 +75,7 @@ public class AndroidPingActivity extends Activity {
     @Override
     protected void onStop() {
     	super.onStop();
-    	
+    	OS.shutdown();
     	SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
     	SharedPreferences.Editor editor = settings.edit();
     	editor.putString("serverhost", mServerHost);

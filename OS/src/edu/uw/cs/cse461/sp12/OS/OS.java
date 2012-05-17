@@ -123,6 +123,8 @@ public class OS {
 	public static synchronized void shutdown() {
 		if ( mAmShutdown ) return;
 		try {
+			DDNSFullName ddnsName = new DDNSFullName(mHostname);
+			((DDNSResolverService) getService("ddnsresolver")).unregister(ddnsName);
 			for ( String serviceName : serviceMap.keySet() ) {
 				RPCCallable service = serviceMap.get(serviceName);
 				service.shutdown();
@@ -133,7 +135,9 @@ public class OS {
 			Log.e(TAG, "Error shutting down services: " + e.getMessage());
 			throw new RuntimeException(e.getMessage());
 		}
+		
 		mAmShutdown = true;
+		
 	}
 	
 	/**

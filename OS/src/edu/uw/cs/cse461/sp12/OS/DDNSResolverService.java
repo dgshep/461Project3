@@ -94,7 +94,9 @@ public class DDNSResolverService extends RPCCallable {
 		}
 		RegThread t = regThreads.get(ddnsFullName);
 		t.stopUpdate();
-		process("unregister", request);
+		try{
+			process("unregister", request);
+		}catch (DDNSNoAddressException e){};
 	}
 	private String getIp(){
 		RPCService rpc = (RPCService) OS.getService("rpc");
@@ -174,6 +176,7 @@ public class DDNSResolverService extends RPCCallable {
 		}
 		public synchronized void stopUpdate() {
 			this.update = false;
+			
 		}
 		@Override
 		public void run() {
@@ -196,10 +199,13 @@ public class DDNSResolverService extends RPCCallable {
 					break;
 				}
 				
-				//t.schedule(new wakeup(), Math.abs(ttl - (int)(ttl * .5)));
-				int update = Math.abs(ttl - (int) (ttl * .5));
+				int updateTime = Math.abs(ttl - (int) (ttl * .5));
 				try {
-					Thread.sleep(update * 1000);
+					int sleepTime = 0;
+					while((sleepTime < updateTime) && update) {//checks for unregister
+						Thread.sleep(1000);
+						sleepTime += 1;
+					}
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
