@@ -33,8 +33,8 @@ public class DDNSService extends RPCCallable {
 		resolve = new RPCCallableMethod<DDNSService>(this, "_resolve");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "resolve", resolve);
 		
-		root = new RPCCallerSocket(OS.config().getProperty("ddns.rootserver"), 
-				OS.config().getProperty("ddns.rootserver"), OS.config().getProperty("ddns.rootport"));
+//		root = new RPCCallerSocket(OS.config().getProperty("ddns.rootserver"), 
+//				OS.config().getProperty("ddns.rootserver"), OS.config().getProperty("ddns.rootport"));
 		
 		
 		nodes = new HashMap<String, Node>();

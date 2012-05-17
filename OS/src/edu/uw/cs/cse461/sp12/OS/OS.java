@@ -1,6 +1,7 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.FileInputStream;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
 import java.util.Timer;
@@ -11,6 +12,7 @@ import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
+
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.sp12.util.Log;
@@ -38,8 +40,14 @@ public class OS {
 													   "edu.uw.cs.cse461.sp12.OS.EchoService"
 	                                                 };
 	public static final String[] ddnsServiceClasses = { "edu.uw.cs.cse461.sp12.OS.DDNSService",
-														"edu.uw.cs.cse461.sp12.OS.RPCService"
+														"edu.uw.cs.cse461.sp12.OS.RPCService",
+														"edu.uw.cs.cse461.sp12.OS.DDNSResolverService"
 			  									      };
+	public static final String[] allServiceClasses = {"edu.uw.cs.cse461.sp12.OS.RPCService",
+		   											  "edu.uw.cs.cse461.sp12.OS.EchoService",
+		   											  "edu.uw.cs.cse461.sp12.OS.DDNSService",
+													  "edu.uw.cs.cse461.sp12.OS.RPCService",
+													  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService"};
 	//---------------------------------------------------------------------------------------------------
 
 	// used to keep track of started services.  The String key is the name returned by the
@@ -82,14 +90,19 @@ public class OS {
 		}
 		
 		@Override
-		public void run() {
+		public synchronized void run() {
 			try {
 				while(!mAmShutdown){
 					int ttl = ((DDNSResolverService)serviceMap.get("ddnsresolver")).register(name, 
 						Integer.parseInt(mConfig.getProperty("ddns.rootport")));
-					Timer t = new Timer();
-					t.schedule(new wakeup(), Math.abs(ttl - (int)(ttl * .5)));
-					wait();
+					//System.out.println("Registered with a ttl of: " + ttl);
+					long start = System.currentTimeMillis();
+					long wait = 0;
+					//t.schedule(new wakeup(), Math.abs(ttl - (int)(ttl * .5)));
+					int update = Math.abs(ttl - (int)(ttl * .5));
+					while(wait < update*1000){
+						wait = System.currentTimeMillis() - start;
+					}
 				}
 			} catch (Exception e) {
 				e.printStackTrace();
@@ -98,12 +111,12 @@ public class OS {
 		
 	}
 	
-	private static class wakeup extends TimerTask {
-		@Override
-		public void run() {
-			regThread.notify();
-		}
-	}
+//	private static class wakeup extends TimerTask {
+//		@Override
+//		public void run() {
+//			regThread.notify();
+//		}
+//	}
 	
 	/**
 	 * Starts "OS resident" services.  The argument is an array of class names.

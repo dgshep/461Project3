@@ -79,8 +79,7 @@ public class AppManager {
 
 		// boot the OS and load RPC services
 		OS.boot(config);
-		OS.startServices(OS.rpcServiceClasses);
-		OS.startServices(OS.ddnsServiceClasses);
+		OS.startServices(OS.allServiceClasses);
 	}
 
 	/**

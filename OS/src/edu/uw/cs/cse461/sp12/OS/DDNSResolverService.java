@@ -87,10 +87,10 @@ public class DDNSResolverService extends RPCCallable {
 		process("unregister", request);
 	}
 	private String getIp(){
-		RPCService whoami = (RPCService) OS.getService("whoami");
+		RPCService rpc = (RPCService) OS.getService("rpc");
 		String ip;
 		try {
-			ip = whoami.localIP();
+			ip = rpc.localIP();
 		} catch (UnknownHostException e) {
 			throw new IllegalStateException("This host doesn't have an ip address!");
 		}
@@ -122,8 +122,8 @@ public class DDNSResolverService extends RPCCallable {
 					else if(failType == 6) throw new DDNSZoneException();
 					else throw new DDNSException(response.getString("message"));
 				} else {
-					done = node.getBoolean("done");
-					if(done) break;
+					done = response.getBoolean("done");
+					if(done || response.getJSONObject("node").getString("name").equals(request.getString("name"))) break;
 					node = response.getJSONObject("node");
 					ip = node.getString("ip");
 					port = node.getInt("port");
@@ -138,6 +138,7 @@ public class DDNSResolverService extends RPCCallable {
 						serverPort = port;
 					}
 				}
+				caller.close();
 			}
 			return response;
 		} catch(IOException ioe){
