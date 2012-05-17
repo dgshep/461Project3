@@ -64,6 +64,7 @@ public class OS {
 		if ( mHostname == null ) throw new RuntimeException("OS: no hostname in config file");
 		if ( mHostname.equals(".") ) mHostname = "";
 		else if ( mHostname.endsWith(".") ) mHostname = mHostname.substring(0,mHostname.length()-1);
+		DDNSFullName ddnsName = new DDNSFullName(mHostname);
 		
 		mAmShutdown = false; // at this point, we're up, but with no services running
 	}
