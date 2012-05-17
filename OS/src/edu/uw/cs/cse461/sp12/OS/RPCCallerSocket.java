@@ -33,7 +33,11 @@ public class RPCCallerSocket extends Socket {
 	 * @throws JSONException 
 	 */
 	public RPCCallerSocket(String hostname, String ip, String port) throws IOException, JSONException {
-		super(ip, Integer.parseInt(port));
+		this(hostname, ip, Integer.parseInt(port));	
+	}
+	
+	public RPCCallerSocket(String hostname, String ip, int port) throws IOException, JSONException {
+		super(ip, port);
 		mRemoteHost = hostname;
 		String time = OS.config().getProperty("rpc.timeout");
 		int rpcTimeout = Integer.parseInt(time);  

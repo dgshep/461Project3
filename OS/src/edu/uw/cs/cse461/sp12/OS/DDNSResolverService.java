@@ -1,15 +1,27 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
 
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoAddressException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoSuchNameException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSAuthorizationException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSRuntimeException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSTTLExpiredException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSZoneException;
+import edu.uw.cs.cse461.sp12.util.Log;
+
+
+
 
 public class DDNSResolverService extends RPCCallable {
 	
-	public static final String rootDNSServer = "cse461.cs.washington.edu";
-	public static final String rootDNSPort = "46130";
+	private final String rootDNSServer = OS.config().getProperty("ddns.rootserver");
+	private final String rootDNSPort = OS.config().getProperty("ddns.rootport");
+	private final String password = OS.config().getProperty("ddns.password");
 	/**
 	 * The constructor registers RPC-callable methods with the RPCService.
 	 * @throws IOException
@@ -30,39 +42,105 @@ public class DDNSResolverService extends RPCCallable {
 
 	}
 	public DDNSRRecord resolve(String targetStr) throws DDNSException{
-		DDNSRRecord ret = null;
-		String recordType = "";
-		String name = targetStr;
-		String ip = "";
-		int port = 0;
+		JSONObject request = new JSONObject();
 		try {
-			while (!recordType.equals("A")) {
-				RPCCallerSocket socket = new RPCCallerSocket(rootDNSServer,
-						rootDNSServer, rootDNSPort);
-				JSONObject response = socket.invoke("ddns", "resolve",
-						new JSONObject().put("name", targetStr));
-				recordType = response.getString("type");
-			}
-		} catch (IOException e) {
-			throw new DDNSException("Cannot connect to root DNS server!");
+			request.put("name", targetStr);
 		} catch (JSONException e) {
-			throw new DDNSException("Communication with name server encountered an error.");
+			throw new IllegalArgumentException("Target String: " + targetStr + " is invalid!");
 		}
-		return ret;
-
+		JSONObject ret = process("resolve", request);
+		try {
+			return new DDNSRRecord(ret.getString("type"), targetStr, ret.getString("ip"), ret.getInt("port"));
+		} catch (JSONException e) {
+			Log.e("Resolve", "Return message is garbled...");
+			return null;
+		}
 	}
 	
-	public void register(DDNSFullName ddnsFullName, int port) {
-		// TODO Auto-generated method stub
+	public void register(DDNSFullName ddnsFullName, int port) throws DDNSException {
+		String ip = getIp();
+		JSONObject request = new JSONObject();
+		try {
+			request.put("name", ddnsFullName.toString());
+			request.put("ip", ip);
+			request.put("port", port);
+			request.put("password", password);
+		} catch (JSONException e) {
+			throw new IllegalArgumentException("Illegal arguments: " + ddnsFullName + " ; " + password);
+		}
+		process("register", request);
 		
 	}
-
-	public void unregister(DDNSFullName ddnsFullName) {
-		// TODO Auto-generated method stub
+	public void unregister(DDNSFullName ddnsFullName) throws DDNSException {
+		JSONObject request = new JSONObject();
+		try{
+			request.put("name", ddnsFullName.toString());
+			request.put("password", password);
+		} catch(JSONException e){
+			throw new IllegalArgumentException("Illegal arguments: " + ddnsFullName + " ; " + password);
+		}
+		process("unregister", request);
+		
 		
 	}
-	private enum RecordType{
-		
+	private String getIp(){
+		RPCService whoami = (RPCService) OS.getService("whoami");
+		String ip;
+		try {
+			ip = whoami.localIP();
+		} catch (UnknownHostException e) {
+			throw new IllegalStateException("This host doesn't have an ip address!");
+		}
+		return ip;
 	}
-
+	private JSONObject process(String method, JSONObject request) throws DDNSException{
+		String resultType = "";
+		String recordType = "";
+		boolean done = false;
+		int serverPort = Integer.parseInt(rootDNSPort);
+		String serverHost = rootDNSServer;
+		String ip = "";
+		int port = 0;
+		JSONObject response = null;
+		JSONObject node = null;
+		RPCCallerSocket caller;
+		try{
+			while(true){
+				caller = new RPCCallerSocket(serverHost, serverHost, serverPort);
+				response = caller.invoke("ddns", method, request);
+				resultType = response.getString("resulttype");
+				if(resultType.equals("ddnsexception")){
+					int failType = response.getInt("exceptionnum");
+					if(failType == 1) throw new DDNSNoSuchNameException();
+					else if(failType == 2) throw new DDNSNoAddressException();
+					else if(failType == 3) throw new DDNSAuthorizationException();
+					else if(failType == 4) throw new DDNSRuntimeException();
+					else if(failType == 5) throw new DDNSTTLExpiredException();
+					else if(failType == 6) throw new DDNSZoneException();
+					else throw new DDNSException(response.getString("message"));
+				} else {
+					done = node.getBoolean("done");
+					if(done) break;
+					node = response.getJSONObject("node");
+					ip = node.getString("ip");
+					port = node.getInt("port");
+					recordType = node.getString("type");
+					if(recordType.equals("CNAME")){
+						request.put("name", node.get("alias"));
+						serverHost = rootDNSServer;
+						serverPort = Integer.parseInt(rootDNSPort);
+					}
+					if(recordType.equals("NS")) {
+						serverHost = ip;
+						serverPort = port;
+					}
+				}
+			}
+			return response;
+		} catch(IOException ioe){
+			throw new DDNSException("Cannot connect to name server: " + serverHost);
+		} catch(JSONException je){
+			throw new DDNSException("JSON related communication error");
+		}	
+	}
 }
