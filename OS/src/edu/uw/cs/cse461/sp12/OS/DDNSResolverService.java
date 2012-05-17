@@ -1,6 +1,8 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
+import java.net.UnknownHostException;
+
 import org.json.JSONException;
 import org.json.JSONObject;
 
@@ -10,6 +12,7 @@ import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSAuthorizationException;
 import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSRuntimeException;
 import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSTTLExpiredException;
 import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSZoneException;
+import edu.uw.cs.cse461.sp12.util.Log;
 
 
 
@@ -43,31 +46,67 @@ public class DDNSResolverService extends RPCCallable {
 		try {
 			request.put("name", targetStr);
 		} catch (JSONException e) {
-			e.printStackTrace();
+			throw new IllegalArgumentException("Target String: " + targetStr + " is invalid!");
+		}
+		JSONObject ret = process("resolve", request);
+		try {
+			return new DDNSRRecord(ret.getString("type"), targetStr, ret.getString("ip"), ret.getInt("port"));
+		} catch (JSONException e) {
+			Log.e("Resolve", "Return message is garbled...");
 			return null;
 		}
-		DDNSRRecord ret = process("resolve", request);
-		return new DDNSRRecord(ret.type, targetStr, ret.host, ret.port);
-
 	}
 	
-	public void register(DDNSFullName ddnsFullName, int port) {
-		// TODO Auto-generated method stub
+	public void register(DDNSFullName ddnsFullName, int port) throws DDNSException {
+		String ip = getIp();
+		JSONObject request = new JSONObject();
+		try {
+			request.put("name", ddnsFullName.toString());
+			request.put("ip", ip);
+			request.put("port", port);
+			request.put("password", password);
+		} catch (JSONException e) {
+			throw new IllegalArgumentException("Illegal arguments: " + ddnsFullName + " ; " + password);
+		}
+		process("register", request);
 		
 	}
-	private DDNSRRecord process(String method, JSONObject request) throws DDNSException{
-		DDNSRRecord ret = null;
+	public void unregister(DDNSFullName ddnsFullName) throws DDNSException {
+		JSONObject request = new JSONObject();
+		try{
+			request.put("name", ddnsFullName.toString());
+			request.put("password", password);
+		} catch(JSONException e){
+			throw new IllegalArgumentException("Illegal arguments: " + ddnsFullName + " ; " + password);
+		}
+		process("unregister", request);
+		
+		
+	}
+	private String getIp(){
+		RPCService whoami = (RPCService) OS.getService("whoami");
+		String ip;
+		try {
+			ip = whoami.localIP();
+		} catch (UnknownHostException e) {
+			throw new IllegalStateException("This host doesn't have an ip address!");
+		}
+		return ip;
+	}
+	private JSONObject process(String method, JSONObject request) throws DDNSException{
 		String resultType = "";
 		String recordType = "";
 		boolean done = false;
-		int port = Integer.parseInt(rootDNSPort);
+		int serverPort = Integer.parseInt(rootDNSPort);
+		String serverHost = rootDNSServer;
+		String ip = "";
+		int port = 0;
 		JSONObject response = null;
 		JSONObject node = null;
-		String server = rootDNSServer;
 		RPCCallerSocket caller;
 		try{
-			while(!done){
-				caller = new RPCCallerSocket(server, server, port);
+			while(true){
+				caller = new RPCCallerSocket(serverHost, serverHost, serverPort);
 				response = caller.invoke("ddns", method, request);
 				resultType = response.getString("resulttype");
 				if(resultType.equals("ddnsexception")){
@@ -80,28 +119,28 @@ public class DDNSResolverService extends RPCCallable {
 					else if(failType == 6) throw new DDNSZoneException();
 					else throw new DDNSException(response.getString("message"));
 				} else {
-					node = response.getJSONObject("node");
 					done = node.getBoolean("done");
-					server = node.getString("ip");
+					if(done) break;
+					node = response.getJSONObject("node");
+					ip = node.getString("ip");
 					port = node.getInt("port");
+					recordType = node.getString("type");
+					if(recordType.equals("CNAME")){
+						request.put("name", node.get("alias"));
+						serverHost = rootDNSServer;
+						serverPort = Integer.parseInt(rootDNSPort);
+					}
+					if(recordType.equals("NS")) {
+						serverHost = ip;
+						serverPort = port;
+					}
 				}
-				return new DDNSRRecord(node.getString("name"), node.getString("type"), server, port);
 			}
+			return response;
 		} catch(IOException ioe){
-			throw new DDNSException("Cannot connect to name server: " + server);
+			throw new DDNSException("Cannot connect to name server: " + serverHost);
 		} catch(JSONException je){
 			throw new DDNSException("JSON related communication error");
-		}
-		return ret;
-		
+		}	
 	}
-
-	public void unregister(DDNSFullName ddnsFullName) {
-		// TODO Auto-generated method stub
-		
-	}
-	private enum RecordType{
-		
-	}
-
 }
