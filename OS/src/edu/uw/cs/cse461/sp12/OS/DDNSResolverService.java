@@ -57,7 +57,7 @@ public class DDNSResolverService extends RPCCallable {
 		}
 	}
 	
-	public void register(DDNSFullName ddnsFullName, int port) throws DDNSException {
+	public int register(DDNSFullName ddnsFullName, int port) throws DDNSException {
 		String ip = getIp();
 		JSONObject request = new JSONObject();
 		try {
@@ -68,7 +68,12 @@ public class DDNSResolverService extends RPCCallable {
 		} catch (JSONException e) {
 			throw new IllegalArgumentException("Illegal arguments: " + ddnsFullName + " ; " + password);
 		}
-		process("register", request);
+		JSONObject ret = process("register", request);
+		try{
+			return ret.getInt("lifetime");
+		} catch(JSONException e){
+			throw new IllegalStateException("Unknown lifetime!");
+		}
 		
 	}
 	public void unregister(DDNSFullName ddnsFullName) throws DDNSException {
@@ -80,8 +85,6 @@ public class DDNSResolverService extends RPCCallable {
 			throw new IllegalArgumentException("Illegal arguments: " + ddnsFullName + " ; " + password);
 		}
 		process("unregister", request);
-		
-		
 	}
 	private String getIp(){
 		RPCService whoami = (RPCService) OS.getService("whoami");
