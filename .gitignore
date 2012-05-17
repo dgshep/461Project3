@@ -7,9 +7,6 @@ doc
 *.jardesc
 *.jar
 *.classpath
-
-AndroidPing/.classpath
-AndroidPing/.project
 OS/.classpath
 OSConsoleApps/.classpath
 util/.classpath
