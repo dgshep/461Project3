@@ -52,13 +52,7 @@ public class DDNSService extends RPCCallable {
 
 	@Override
 	public void shutdown() {
-		try {
-			JSONObject unregister = new JSONObject();
-			unregister.put("name", OS.config().getProperty("ddns.hostname"));
-			unregister.put("password", OS.config().getProperty("ddns.password"));
-			root.invoke("ddns", "unregister", unregister);
-			root.close();
-		} catch (Exception e) {e.printStackTrace();}
+
 	}
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
