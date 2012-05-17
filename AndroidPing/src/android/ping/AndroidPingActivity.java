@@ -75,7 +75,7 @@ public class AndroidPingActivity extends Activity {
     @Override
     protected void onStop() {
     	super.onStop();
-    	OS.shutdown();
+    	//OS.shutdown();
     	SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
     	SharedPreferences.Editor editor = settings.edit();
     	editor.putString("serverhost", mServerHost);

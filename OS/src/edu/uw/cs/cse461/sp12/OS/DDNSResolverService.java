@@ -24,6 +24,7 @@ public class DDNSResolverService extends RPCCallable {
 	private final String rootDNSServer = OS.config().getProperty("ddns.rootserver");
 	private final String rootDNSPort = OS.config().getProperty("ddns.rootport");
 	private final String password = OS.config().getProperty("ddns.password");
+	private final Map<DDNSFullName, DDNSRRecord> cache = new HashMap<DDNSFullName, DDNSRRecord>();
 	private Map<DDNSFullName, RegThread> regThreads = new HashMap<DDNSFullName, RegThread>();
 	/**
 	 * The constructor registers RPC-callable methods with the RPCService.
@@ -45,15 +46,21 @@ public class DDNSResolverService extends RPCCallable {
 
 	}
 	public DDNSRRecord resolve(String targetStr) throws DDNSException{
+		DDNSFullName targetName = new DDNSFullName(targetStr);
+		if(cache.containsKey(targetName)){
+			return cache.get(targetName); // Cache hit
+		}
 		JSONObject request = new JSONObject();
 		try {
-			request.put("name", new DDNSFullName(targetStr).toString());
+			request.put("name", targetName.toString());
 		} catch (JSONException e) {
 			throw new IllegalArgumentException("Target String: " + targetStr + " is invalid!");
 		}
 		try {
 			JSONObject ret = process("resolve", request).getJSONObject("node");
-			return new DDNSRRecord(ret.getString("type"), targetStr, ret.getString("ip"), ret.getInt("port"));
+			DDNSRRecord r = new DDNSRRecord(ret.getString("type"), targetStr, ret.getString("ip"), ret.getInt("port"));
+			cache.put(new DDNSFullName(targetStr), r); //Cache miss
+			return r;
 		} catch (JSONException e) {
 			Log.e("Resolve", "Return message is garbled...");
 			return null;
