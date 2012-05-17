@@ -21,7 +21,7 @@ public class DDNSService extends RPCCallable {
 	
 	private RPCCallerSocket root;
 	private Thread regThread;
-	private Map<String, node> nodes;
+	private Map<String, Node> nodes;
 	
 	public DDNSService() throws Exception {
 		//Read in config file for tree
@@ -39,10 +39,10 @@ public class DDNSService extends RPCCallable {
 		regThread = new Thread(new Registration());
 		regThread.start();
 		
-		nodes = new HashMap<String, node>();
+		nodes = new HashMap<String, Node>();
 		String[] namespace = OS.config().getProperty("ddns.namespace").split(",");
 		for(String s : namespace) {
-			nodes.put(s, new node(s, OS.config().getProperty(s)));
+			nodes.put(s, new Node(s, OS.config().getProperty(s)));
 		}
 		
 	}
@@ -72,12 +72,13 @@ public class DDNSService extends RPCCallable {
 		if(!requestName.substring(requestName.length() - 1 - hostname.length()).equals(hostname))
 			return zoneExep();
 		
-		node location = search(requestName);
-		if(location.dirty)
-			return noAddressExep();
-		
+		Node location = search(requestName);
 		JSONObject result = new JSONObject();
-		if(location.type.equals("NS") || location.type.equals("CNAME")) {
+		if(location == null){
+			noNameExep();
+		}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
+			if(location.dirty)
+				return noAddressExep();
 			result.put("done", false);
 		} else {
 			result.put("done", false);
@@ -96,14 +97,14 @@ public class DDNSService extends RPCCallable {
 //		{node:[node representation described next], lifetime:600, resulttype:"registerresult", "done":true}
 	}
 	
-	private node search(String name) {
+	private Node search(String name) {
 		String[] tokens = name.split("\\.");
 		String host = OS.config().getProperty("ddns.hostname");
 		int index = host.split("\\.").length;
 		for(int i = tokens.length - 1 - index; i >= 0; i--){
 			host = tokens[i] + "." + host;
-			node current = nodes.get(host);
-			if(current.type.equals("NS") || current.type.equals("CNAME")){
+			Node current = nodes.get(host);
+			if(current == null || current.type.equals("NS") || current.type.equals("CNAME")){
 				return current;	
 			}
 		}
@@ -180,7 +181,7 @@ public class DDNSService extends RPCCallable {
 		}
 	}
 	
-	private class node {
+	private class Node {
 		
 		private String ip;
 		private int port;
@@ -189,7 +190,7 @@ public class DDNSService extends RPCCallable {
 		private String alias;
 		private boolean dirty;
 		
-		public node(String name, String type){
+		public Node(String name, String type){
 			this.name = name;
 			this.type = type;
 			dirty = true;
