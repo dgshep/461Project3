@@ -23,13 +23,13 @@ import edu.uw.cs.cse461.sp12.OS.RPCCallable;
  * @author zahorjan
  *
  */
-public class nslookup extends RPCCallable {
+public class nslookup implements OSConsoleApp {
 	
 	/**
 	 * Method required by OSLoadableApp interface
 	 */
 	@Override
-	public String servicename() { return "nslookup"; }
+	public String appname() { return "nslookup"; }
 	
 	/**
 	 * Constructor required by OSLoadableApp interface.  There's nothing to do for this app.
