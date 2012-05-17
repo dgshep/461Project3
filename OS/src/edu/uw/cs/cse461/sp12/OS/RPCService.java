@@ -2,10 +2,13 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.Collections;
+import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -13,6 +16,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.uw.cs.cse461.sp12.util.Log;
 import edu.uw.cs.cse461.sp12.util.TCPMessageHandler;
 
 /**
@@ -107,7 +111,26 @@ public class RPCService extends RPCCallable {
 	 * @throws UnknownHostException
 	 */
 	public String localIP() throws UnknownHostException {
-		return InetAddress.getLocalHost().getHostAddress();
+		StringBuilder IFCONFIG=new StringBuilder();
+		try {
+			for (Enumeration<NetworkInterface> en = NetworkInterface.getNetworkInterfaces(); en.hasMoreElements();) {
+	            NetworkInterface intf = en.nextElement();
+	            for (Enumeration<InetAddress> enumIpAddr = intf.getInetAddresses(); enumIpAddr.hasMoreElements();) {
+	            	InetAddress inetAddress;
+	                while(enumIpAddr.hasMoreElements()) {
+	                	inetAddress = enumIpAddr.nextElement();
+						if (!inetAddress.isLoopbackAddress()
+								&& inetAddress.getHostAddress().length() <= 15) { //&& !inetAddress.isLinkLocalAddress() && inetAddress.isSiteLocalAddress()) {
+							IFCONFIG.append(inetAddress.getHostAddress()
+									.toString());
+						}
+					}
+	            }
+			}
+	    } catch (SocketException ex) {
+	        Log.e("LOG_TAG", ex.toString());
+	    }
+	    return IFCONFIG.toString();
 	}
 
 	/**
@@ -135,6 +158,9 @@ public class RPCService extends RPCCallable {
 			while(!connection.isClosed()) {
 				try {
 					Socket newUser = connection.accept();
+//					Log.i("Server Connection", "User connected on: " 
+//							+ newUser.getInetAddress().getHostAddress()
+//							+ ":" + newUser.getLocalPort());
 					UserConnection thread = new UserConnection(newUser, callbacks);
 					thread.run();
 				} catch (IOException e) {}
@@ -173,6 +199,7 @@ public class RPCService extends RPCCallable {
 					break;
 				}
 			}
+			//Log.i("RPC Server", "User connection has closed.");
 		}
 		
 		public void parseMessage(JSONObject json) throws Exception{
