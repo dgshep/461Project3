@@ -88,7 +88,7 @@ public class OS {
 					int ttl = ((DDNSResolverService)serviceMap.get("ddnsresolver")).register(name, 
 						Integer.parseInt(mConfig.getProperty("ddns.rootport")));
 					Timer t = new Timer();
-					t.schedule(new wakeup(), ttl - (int)(ttl * .5));
+					t.schedule(new wakeup(), Math.abs(ttl - (int)(ttl * .5)));
 					wait();
 				}
 			} catch (Exception e) {
