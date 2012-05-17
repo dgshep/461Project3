@@ -2,6 +2,8 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
 import java.net.UnknownHostException;
+import java.util.HashMap;
+import java.util.Map;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -22,6 +24,7 @@ public class DDNSResolverService extends RPCCallable {
 	private final String rootDNSServer = OS.config().getProperty("ddns.rootserver");
 	private final String rootDNSPort = OS.config().getProperty("ddns.rootport");
 	private final String password = OS.config().getProperty("ddns.password");
+	private Map<DDNSFullName, Runnable> regThreads = new HashMap<DDNSFullName, Runnable>();
 	/**
 	 * The constructor registers RPC-callable methods with the RPCService.
 	 * @throws IOException
@@ -48,8 +51,8 @@ public class DDNSResolverService extends RPCCallable {
 		} catch (JSONException e) {
 			throw new IllegalArgumentException("Target String: " + targetStr + " is invalid!");
 		}
-		JSONObject ret = process("resolve", request);
 		try {
+			JSONObject ret = process("resolve", request).getJSONObject("node");
 			return new DDNSRRecord(ret.getString("type"), targetStr, ret.getString("ip"), ret.getInt("port"));
 		} catch (JSONException e) {
 			Log.e("Resolve", "Return message is garbled...");
@@ -114,16 +117,11 @@ public class DDNSResolverService extends RPCCallable {
 				resultType = response.getString("resulttype");
 				if(resultType.equals("ddnsexception")){
 					int failType = response.getInt("exceptionnum");
-					if(failType == 1) throw new DDNSNoSuchNameException();
-					else if(failType == 2) throw new DDNSNoAddressException();
-					else if(failType == 3) throw new DDNSAuthorizationException();
-					else if(failType == 4) throw new DDNSRuntimeException();
-					else if(failType == 5) throw new DDNSTTLExpiredException();
-					else if(failType == 6) throw new DDNSZoneException();
-					else throw new DDNSException(response.getString("message"));
+					throwException(failType);
+					throw new DDNSException(response.getString("message"));
 				} else {
 					done = response.getBoolean("done");
-					if(done || response.getJSONObject("node").getString("name").equals(request.getString("name"))) break;
+					if(done || response.getJSONObject("node").getString("name").equals(request.getString("name")))  break; //
 					node = response.getJSONObject("node");
 					ip = node.getString("ip");
 					port = node.getInt("port");
@@ -146,5 +144,13 @@ public class DDNSResolverService extends RPCCallable {
 		} catch(JSONException je){
 			throw new DDNSException("JSON related communication error");
 		}	
+	}
+	private void throwException(int failType) throws DDNSException{
+		if(failType == 1) throw new DDNSNoSuchNameException();
+		else if(failType == 2) throw new DDNSNoAddressException();
+		else if(failType == 3) throw new DDNSAuthorizationException();
+		else if(failType == 4) throw new DDNSRuntimeException();
+		else if(failType == 5) throw new DDNSTTLExpiredException();
+		else if(failType == 6) throw new DDNSZoneException();
 	}
 }

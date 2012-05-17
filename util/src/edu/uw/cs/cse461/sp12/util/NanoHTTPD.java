@@ -282,7 +282,7 @@ public class NanoHTTPD
 			wwwroot = new File( args[i+1] ).getAbsoluteFile();
 		else if ( args[i].toLowerCase().endsWith( "licence" ))
 		{
-			myOut.println( LICENCE + "\n" );
+			myOut.println( LICENSE + "\n" );
 			break;
 		}
 
@@ -1097,7 +1097,7 @@ public class NanoHTTPD
 	/**
 	 * The distribution licence
 	 */
-	private static final String LICENCE =
+	private static final String LICENSE =
 		"Copyright (C) 2001,2005-2011 by Jarno Elonen <elonen@iki.fi>\n"+
 		"and Copyright (C) 2010 by Konstantinos Togias <info@ktogias.gr>\n"+
 		"\n"+

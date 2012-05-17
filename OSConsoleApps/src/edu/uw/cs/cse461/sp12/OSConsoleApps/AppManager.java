@@ -30,7 +30,7 @@ public class AppManager {
 
 	private HashMap<String, OSConsoleApp> mAppMap;
 	
-	protected static final String[] RPCApps = {"edu.uw.cs.cse461.sp12.OSConsoleApps.Echo", 
+	protected static final String[] RPCApps = {//"edu.uw.cs.cse461.sp12.OSConsoleApps.Echo", 
 											   "edu.uw.cs.cse461.sp12.OSConsoleApps.WhoAmI",
 											   "edu.uw.cs.cse461.sp12.OSConsoleApps.Ping",
 											   "edu.uw.cs.cse461.sp12.OSConsoleApps.nslookup"

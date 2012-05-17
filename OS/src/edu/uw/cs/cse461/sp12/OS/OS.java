@@ -39,15 +39,15 @@ public class OS {
 	public static final String[] rpcServiceClasses = { "edu.uw.cs.cse461.sp12.OS.RPCService",
 													   "edu.uw.cs.cse461.sp12.OS.EchoService"
 	                                                 };
-	public static final String[] ddnsServiceClasses = { "edu.uw.cs.cse461.sp12.OS.DDNSService",
-														"edu.uw.cs.cse461.sp12.OS.RPCService",
+	public static final String[] ddnsServiceClasses = { "edu.uw.cs.cse461.sp12.OS.RPCService",
+														"edu.uw.cs.cse461.sp12.OS.DDNSService",
 														"edu.uw.cs.cse461.sp12.OS.DDNSResolverService"
 			  									      };
 	public static final String[] allServiceClasses = {"edu.uw.cs.cse461.sp12.OS.RPCService",
 		   											  "edu.uw.cs.cse461.sp12.OS.EchoService",
 		   											  "edu.uw.cs.cse461.sp12.OS.DDNSService",
-													  "edu.uw.cs.cse461.sp12.OS.RPCService",
-													  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService"};
+													  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService",
+		   											  "edu.uw.cs.cse461.sp12.OS.HTTPDService"};
 	//---------------------------------------------------------------------------------------------------
 
 	// used to keep track of started services.  The String key is the name returned by the
@@ -91,18 +91,26 @@ public class OS {
 		
 		@Override
 		public synchronized void run() {
+			boolean registered = false;
 			try {
 				while(!mAmShutdown){
-					int ttl = ((DDNSResolverService)serviceMap.get("ddnsresolver")).register(name, 
-						Integer.parseInt(mConfig.getProperty("ddns.rootport")));
-					//System.out.println("Registered with a ttl of: " + ttl);
-					long start = System.currentTimeMillis();
-					long wait = 0;
+					RPCService rpc = (RPCService) getService("rpc");
+					int port = rpc.localPort();
+					int ttl;
+					try{
+						ttl = ((DDNSResolverService)getService("ddnsresolver")).register(name, port);
+					} catch(DDNSException e) {
+						e.printStackTrace();
+						break;
+					}
+					if (!registered) {
+						System.out.println("Registered with a lifetime of: " + ttl);
+						registered = true;
+					}
+					
 					//t.schedule(new wakeup(), Math.abs(ttl - (int)(ttl * .5)));
 					int update = Math.abs(ttl - (int)(ttl * .5));
-					while(wait < update*1000){
-						wait = System.currentTimeMillis() - start;
-					}
+					Thread.sleep(update*1000);
 				}
 			} catch (Exception e) {
 				e.printStackTrace();

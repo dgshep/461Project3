@@ -12,5 +12,11 @@ public class DDNSRRecord {
 		this.host = host;
 		this.port = port;
 	}
+	public String toString(){
+		return "Type: " + this.type +
+			   "; Name: " + this.name + 
+			   "; Host: " + this.host +
+			   "; Port: " + this.port;
+	}
 
 }

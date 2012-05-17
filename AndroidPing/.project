@@ -32,14 +32,14 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>osSrc</name>
+			<name>OSsrc</name>
 			<type>2</type>
-			<location>/Applications/eclipse/Eclipse.app/Contents/MacOS/C::/Users/Matt/git/461Project3/OS/src</location>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461Project3/OS/src</location>
 		</link>
 		<link>
-			<name>utilSrc</name>
+			<name>UTILsrc</name>
 			<type>2</type>
-			<location>/Applications/eclipse/Eclipse.app/Contents/MacOS/C::/Users/Matt/git/461Project3/util/src</location>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461Project3/util/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>

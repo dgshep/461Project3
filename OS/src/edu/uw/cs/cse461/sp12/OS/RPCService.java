@@ -244,7 +244,7 @@ public class RPCService extends RPCCallable {
 					JSONArray names = json.names();
 					for ( int i=0; i<names.length(); i++ ) {
 						String key = (String)names.getString(i);
-						copy.put(key, json.getString(key));
+						copy.put(key, json.get(key));
 					}
 					error.put("callargs", copy);
 					handler.sendMessage(error);

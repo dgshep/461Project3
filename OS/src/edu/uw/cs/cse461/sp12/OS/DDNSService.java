@@ -4,16 +4,19 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
+import java.util.TreeMap;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.uw.cs.cse461.sp12.OS.HTTPDService.HTTPProvider;
 import edu.uw.cs.cse461.sp12.OS.RPCCallable.RPCCallableMethod;
 
-public class DDNSService extends RPCCallable {
+public class DDNSService extends RPCCallable implements HTTPProvider {
 
 	private RPCCallableMethod<DDNSService> register;
 	private RPCCallableMethod<DDNSService> unregister;
@@ -21,6 +24,8 @@ public class DDNSService extends RPCCallable {
 	
 	private RPCCallerSocket root;
 	private Map<String, Node> nodes;
+	private String soaIp = ((RPCService)OS.getService("rpc")).localIP();
+	private int soaPort = ((RPCService)OS.getService("rpc")).localPort();
 	
 	public DDNSService() throws Exception {
 		//Read in config file for tree
@@ -37,10 +42,17 @@ public class DDNSService extends RPCCallable {
 //				OS.config().getProperty("ddns.rootserver"), OS.config().getProperty("ddns.rootport"));
 		
 		
-		nodes = new HashMap<String, Node>();
+		nodes = new TreeMap<String, Node>();
 		String[] namespace = OS.config().getProperty("ddns.namespace").split(",");
 		for(String s : namespace) {
-			nodes.put(s, new Node(s, OS.config().getProperty(s)));
+			String type = OS.config().getProperty(s);
+			nodes.put(s, new Node(s, type));
+//				if(type.equals("SOA")){
+//					Node soa = new Node(s, type);
+//					soa.ip = soaIp;
+//					soa.port = soaPort;
+//					nodes.put(s, soa);
+//			}
 		}
 		
 	}
@@ -75,7 +87,7 @@ public class DDNSService extends RPCCallable {
 				result.put("done", false);
 			} else {
 				result.put("done", true);
-				result.put("lifetime", Integer.parseInt(OS.config().getProperty("lifetime")));
+				result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.lifetime")));
 				try{
 					nodes.get(location.name).dirty = false;
 					nodes.get(location.name).ip = args.getString("ip");
@@ -152,7 +164,7 @@ public class DDNSService extends RPCCallable {
 
 	private JSONObject checkPW(JSONObject args) throws JSONException {
 		try {
-			if(args.getString("password").equals(OS.config().getProperty("ddns.password")))
+			if(!args.getString("password").equals(OS.config().getProperty("ddns.password")))
 				return authorizationExep(args.getString("name"));
 			return null;
 		} catch (JSONException e) {
@@ -162,9 +174,9 @@ public class DDNSService extends RPCCallable {
 	
 	private JSONObject checkArgs(JSONObject args) throws JSONException {
 		try {
-			String hostname = OS.config().getProperty("ddns.hostname");
-			String requestName = args.getString("name");
-			if(!requestName.substring(requestName.length() - 1 - hostname.length()).equals(hostname))
+			String hostname = new DDNSFullName(OS.config().getProperty("ddns.hostname")).toString();
+			String requestName = new DDNSFullName(args.getString("name")).toString();
+			if(!requestName.endsWith(hostname))
 				return zoneExep(args.getString("name"));
 			return null;
 		} catch (JSONException e) {
@@ -274,7 +286,7 @@ public class DDNSService extends RPCCallable {
 			JSONObject result = new JSONObject();
 			result.put("name", name);
 			result.put("type", type);
-			if(type.equals("NS"))
+			if(type.equals("NS")) //FIXME: What? Should this be CNAME? Why is type added twice?
 				result.put("type", type);
 			else {
 				result.put("ip", ip);
@@ -282,5 +294,37 @@ public class DDNSService extends RPCCallable {
 			}
 			return result;
 		}
+		public String toString(){
+			StringBuilder out = new StringBuilder();
+			out.append("[Type: " + type);
+			if(type.equals("CNAME")){
+				out.append(" Alias: " + alias);
+			} else {
+				out.append(" IP: " + ip);
+				out.append(" Port : " + port);
+			}
+			out.append("]");
+			return out.toString();
+		}
+		
+	}
+	@Override
+	public String toString(){
+		String zoneName = OS.config().getProperty("ddns.hostname");
+		int offset = zoneName.split("\\.").length;
+		StringBuilder out = new StringBuilder();
+		out.append("Zone: " + zoneName + "\n");
+		for(Entry<String, Node> n : nodes.entrySet()){
+			String name = n.getKey();
+			for(int i = 0; i < name.split("\\.").length - offset; i++){
+				out.append("    ");
+			}
+			out.append("'" + name + "'\t" + n.getValue().toString() + "\n");
+		}
+		return out.toString();
+	}
+	@Override
+	public String httpServe(String[] uriArray) {
+		return toString();//TODO: make prettier
 	}
 }
