@@ -296,14 +296,18 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		}
 		public String toString(){
 			StringBuilder out = new StringBuilder();
-			out.append("[Type: " + type);
-			if(type.equals("CNAME")){
-				out.append(" Alias: " + alias);
+			if (!dirty) {
+				out.append("[Type: " + type);
+				if (type.equals("CNAME")) {
+					out.append(" Alias: " + alias);
+				} else {
+					out.append(" IP: " + ip);
+					out.append(" Port : " + port);
+				}
+				out.append("]");
 			} else {
-				out.append(" IP: " + ip);
-				out.append(" Port : " + port);
+				out.append("[No current address]");
 			}
-			out.append("]");
 			return out.toString();
 		}
 		

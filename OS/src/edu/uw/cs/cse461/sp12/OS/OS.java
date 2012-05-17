@@ -48,6 +48,9 @@ public class OS {
 		   											  "edu.uw.cs.cse461.sp12.OS.DDNSService",
 													  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService",
 		   											  "edu.uw.cs.cse461.sp12.OS.HTTPDService"};
+	public static final String[] androidServiceClasses = {"edu.uw.cs.cse461.sp12.OS.RPCService",
+														  "edu.uw.cs.cse461.sp12.OS.EchoService",
+														  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService"};
 	//---------------------------------------------------------------------------------------------------
 
 	// used to keep track of started services.  The String key is the name returned by the
@@ -81,45 +84,7 @@ public class OS {
 		mAmShutdown = false; // at this point, we're up, but with no services running
 	}
 
-	private static class Registration implements Runnable {
 
-		private DDNSFullName name;
-		
-		public Registration(DDNSFullName name) {
-			this.name = name;
-		}
-		
-		@Override
-		public synchronized void run() {
-			boolean registered = false;
-			try {
-				while(!mAmShutdown){
-					RPCService rpc = (RPCService) getService("rpc");
-					int port = rpc.localPort();
-					int ttl;
-					try{
-						ttl = ((DDNSResolverService)getService("ddnsresolver")).register(name, port);
-					} catch(DDNSException e) {
-						e.printStackTrace();
-						break;
-					}
-					if (!registered) {
-						System.out.println("Registered with a lifetime of: " + ttl);
-						registered = true;
-					}
-					
-					//t.schedule(new wakeup(), Math.abs(ttl - (int)(ttl * .5)));
-					int update = Math.abs(ttl - (int)(ttl * .5));
-					Thread.sleep(update*1000);
-				}
-			} catch (Exception e) {
-				e.printStackTrace();
-			}
-		}
-		
-	}
-	
-	
 	/**
 	 * Starts "OS resident" services.  The argument is an array of class names.
 	 * Two useful lists are included as static OS class variables: rpcServiceClasses
@@ -142,9 +107,8 @@ public class OS {
 				Log.i(TAG, serviceClassname + " started");
 			}
 			DDNSFullName ddnsName = new DDNSFullName(mHostname);
-			regThread = new Thread(new Registration(ddnsName));
-			
-			regThread.start();
+			int port = ((RPCService) getService("rpc")).localPort();
+			((DDNSResolverService) getService("ddnsresolver")).register(ddnsName, port);
 		} catch (Exception e) {
 			Log.e(TAG, "Error while starting service " + startingService + ": " + e.getMessage());
 			shutdown();
