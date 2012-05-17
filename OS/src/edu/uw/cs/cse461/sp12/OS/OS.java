@@ -70,12 +70,10 @@ public class OS {
 		if ( mHostname.equals(".") ) mHostname = "";
 		else if ( mHostname.endsWith(".") ) mHostname = mHostname.substring(0,mHostname.length()-1);
 		
-		DDNSFullName ddnsName = new DDNSFullName(mHostname);
-		
 		mAmShutdown = false; // at this point, we're up, but with no services running
 	}
 
-	private class Registration implements Runnable {
+	private static class Registration implements Runnable {
 
 		private DDNSFullName name;
 		
@@ -100,7 +98,7 @@ public class OS {
 		
 	}
 	
-	private class wakeup extends TimerTask {
+	private static class wakeup extends TimerTask {
 		@Override
 		public void run() {
 			regThread.notify();
@@ -128,8 +126,10 @@ public class OS {
 				serviceMap.put(service.servicename(), service);
 				Log.i(TAG, serviceClassname + " started");
 			}
-//			regThread = new Thread(new Registration());
-//			regThread.start();
+			DDNSFullName ddnsName = new DDNSFullName(mHostname);
+			regThread = new Thread(new Registration(ddnsName));
+			
+			regThread.start();
 		} catch (Exception e) {
 			Log.e(TAG, "Error while starting service " + startingService + ": " + e.getMessage());
 			shutdown();
