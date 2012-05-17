@@ -111,12 +111,6 @@ public class OS {
 		
 	}
 	
-//	private static class wakeup extends TimerTask {
-//		@Override
-//		public void run() {
-//			regThread.notify();
-//		}
-//	}
 	
 	/**
 	 * Starts "OS resident" services.  The argument is an array of class names.
