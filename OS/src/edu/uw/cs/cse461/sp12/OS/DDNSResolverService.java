@@ -47,7 +47,7 @@ public class DDNSResolverService extends RPCCallable {
 	public DDNSRRecord resolve(String targetStr) throws DDNSException{
 		JSONObject request = new JSONObject();
 		try {
-			request.put("name", targetStr);
+			request.put("name", new DDNSFullName(targetStr).toString());
 		} catch (JSONException e) {
 			throw new IllegalArgumentException("Target String: " + targetStr + " is invalid!");
 		}
@@ -121,7 +121,10 @@ public class DDNSResolverService extends RPCCallable {
 					throw new DDNSException(response.getString("message"));
 				} else {
 					done = response.getBoolean("done");
-					if(done || response.getJSONObject("node").getString("name").equals(request.getString("name")))  break; //
+					if(done){ // || response.getJSONObject("node").getString("name").equals(request.getString("name")))  break; //
+						caller.close();
+						break;
+					}
 					node = response.getJSONObject("node");
 					ip = node.getString("ip");
 					port = node.getInt("port");

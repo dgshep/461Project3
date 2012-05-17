@@ -13,6 +13,7 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import edu.uw.cs.cse461.sp12.util.Log;
 import edu.uw.cs.cse461.sp12.util.TCPMessageHandler;
 
 /**
@@ -135,6 +136,9 @@ public class RPCService extends RPCCallable {
 			while(!connection.isClosed()) {
 				try {
 					Socket newUser = connection.accept();
+//					Log.i("Server Connection", "User connected on: " 
+//							+ newUser.getInetAddress().getHostAddress()
+//							+ ":" + newUser.getLocalPort());
 					UserConnection thread = new UserConnection(newUser, callbacks);
 					thread.run();
 				} catch (IOException e) {}
@@ -173,6 +177,7 @@ public class RPCService extends RPCCallable {
 					break;
 				}
 			}
+			//Log.i("RPC Server", "User connection has closed.");
 		}
 		
 		public void parseMessage(JSONObject json) throws Exception{
