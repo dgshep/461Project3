@@ -1,19 +1,14 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.FileInputStream;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Properties;
-import java.util.Timer;
-import java.util.TimerTask;
 
 import org.apache.commons.cli.CommandLine;
 import org.apache.commons.cli.CommandLineParser;
 import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
-
-import org.json.JSONObject;
 
 import edu.uw.cs.cse461.sp12.util.Log;
 

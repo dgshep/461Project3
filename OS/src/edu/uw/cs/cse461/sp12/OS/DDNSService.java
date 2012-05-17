@@ -69,7 +69,6 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
 //		{port:34562, name:"jz.cse461.","password":"jzpassword","ip":"192.168.0.77"}
-		//TODO write timer to unregister after lifetime
 		try {args.getString("name");}
 		catch (JSONException e) {return runtimeExep("", "no name supplied");}
 		JSONObject pw = checkPW(args);
@@ -87,11 +86,9 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 				result.put("done", false);
 			} else {
 				result.put("done", true);
-				result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.lifetime")));
+				result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.chachettl")));
 				try{
-					nodes.get(location.name).dirty = false;
-					nodes.get(location.name).ip = args.getString("ip");
-					nodes.get(location.name).port = args.getInt("port");
+					location.register(args.getString("ip"), args.getInt("port"));
 				}catch(Exception e) {
 					return runtimeExep(args.getString("name"), "incorrect arguments");
 				}
@@ -128,7 +125,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 				result.put("node", location.toJSON());
 			} else {
 				result.put("done", true);
-				nodes.get(location.name).dirty = true;
+				location.unregister();
 			}
 			result.put("resulttype", "unregisterresult");
 			return result;
@@ -136,9 +133,6 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	}
 	
 	public JSONObject _resolve(JSONObject args) throws JSONException, IOException {
-		//Look up name in storage
-		//Send result
-		//TODO check step limit
 		try {args.getString("name");}
 		catch (JSONException e) {return runtimeExep("", "no name supplied");}
 		JSONObject check = checkArgs(args);
@@ -189,7 +183,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		String host = OS.config().getProperty("ddns.hostname");
 		int index = host.split("\\.").length;
 		
-		for(int i = tokens.length - 1 - index; i >= 0; i--){
+		for(int i = tokens.length - 1 - index ; i >= 0 && i < Integer.parseInt(OS.config().getProperty("ddns.edgesteps")); i--){
 			host = tokens[i] + "." + host;
 			Node current = nodes.get(host);
 			if(current == null || current.type.equals("NS") || current.type.equals("CNAME")){
@@ -273,6 +267,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		private String type;
 		private String alias;
 		private boolean dirty;
+		private Timer t;
 		
 		public Node(String name, String type){
 			this.name = name;
@@ -280,20 +275,41 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 			dirty = true;
 			port = 0;
 			ip = "";
+			t = new Timer();
+		}
+		
+		public void register(String ip, int port) {
+			this.ip = ip;
+			this.port = port;
+			t.cancel();
+			t = new Timer();
+			t.schedule(new unreg(), 1000 * Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
+		}
+		
+		public class unreg extends TimerTask{
+			@Override
+			public void run() {
+				unregister();
+			}
+		}
+		
+		public void unregister() {
+			dirty = true;
 		}
 		
 		public JSONObject toJSON() throws JSONException {
 			JSONObject result = new JSONObject();
 			result.put("name", name);
 			result.put("type", type);
-			if(type.equals("NS")) //FIXME: What? Should this be CNAME? Why is type added twice?
-				result.put("type", type);
+			if(type.equals("CNAME"))
+				result.put("alias", alias);
 			else {
 				result.put("ip", ip);
 				result.put("port", port);
 			}
 			return result;
 		}
+		
 		public String toString(){
 			StringBuilder out = new StringBuilder();
 			out.append("[Type: " + type);
@@ -308,6 +324,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		}
 		
 	}
+	
 	@Override
 	public String toString(){
 		String zoneName = OS.config().getProperty("ddns.hostname");
