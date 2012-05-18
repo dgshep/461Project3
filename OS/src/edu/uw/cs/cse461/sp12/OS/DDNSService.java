@@ -78,8 +78,6 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		else{
 			Node location = search(args.getString("name"));
 			JSONObject result = new JSONObject();
-			if(location.dirty)
-				return noAddressExep(args.getString("name"));
 			if(location == null){
 				noNameExep(args.getString("name"));
 			}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
@@ -118,11 +116,9 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		else{
 			Node location = search(args.getString("name"));
 			JSONObject result = new JSONObject();
-			if(location.dirty)
-				return noAddressExep(args.getString("name"));
-			if(location == null){
+			if(location == null)
 				noNameExep(args.getString("name"));
-			}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
+			if(location.type.equals("NS") || location.type.equals("CNAME")) {
 				result.put("done", false);
 				result.put("node", location.toJSON());
 			} else {
