@@ -99,12 +99,7 @@ public class DDNSResolverService extends RPCCallable {
 		Thread t = new Thread(r);
 		t.start();
 		regThreads.put(ddnsFullName, r);
-//		JSONObject ret = process("register", request);
-//		try{
-//			return ret.getInt("lifetime");
-//		} catch(JSONException e){
-//			throw new IllegalStateException("Unknown lifetime!");
-//		}
+
 		
 	}
 	public void unregister(DDNSFullName ddnsFullName) throws DDNSException {
