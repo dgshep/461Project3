@@ -47,12 +47,9 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		for(String s : namespace) {
 			String type = OS.config().getProperty(s);
 			nodes.put(s, new Node(s, type));
-//				if(type.equals("SOA")){
-//					Node soa = new Node(s, type);
-//					soa.ip = soaIp;
-//					soa.port = soaPort;
-//					nodes.put(s, soa);
-//			}
+			if(type.equals("CNAME")) {
+				nodes.get(s).alias=OS.config().getProperty(s + "CNAME");
+			}
 		}
 		
 	}
@@ -166,7 +163,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	
 	private JSONObject checkArgs(JSONObject args) throws JSONException {
 		try {
-			String hostname = new DDNSFullName(OS.config().getProperty("ddns.hostname")).toString();
+			String hostname = new DDNSFullName(OS.config().getProperty("host.name")).toString();
 			String requestName = new DDNSFullName(args.getString("name")).toString();
 			if(!requestName.endsWith(hostname))
 				return zoneExep(args.getString("name"));
@@ -178,7 +175,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	
 	private Node search(String name) {
 		String[] tokens = name.split("\\.");
-		String host = OS.config().getProperty("ddns.hostname");
+		String host = OS.config().getProperty("host.name");
 		int index = host.split("\\.").length;
 		
 		for(int i = tokens.length - 1 - index ; i >= 0 && i < Integer.parseInt(OS.config().getProperty("ddns.edgesteps")); i--){
@@ -330,7 +327,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	
 	@Override
 	public String toString(){
-		String zoneName = OS.config().getProperty("ddns.hostname");
+		String zoneName = OS.config().getProperty("host.name");
 		int offset = zoneName.split("\\.").length;
 		StringBuilder out = new StringBuilder();
 		out.append("Zone: " + zoneName + "\n");
