@@ -178,6 +178,7 @@ public class DDNSResolverService extends RPCCallable {
 				}
 				caller.close();
 			}
+			if(!done) throw new DDNSException("Couldn't Resolve name (possible loop)");
 			return response;
 		} catch(IOException ioe){
 			throw new DDNSException("Cannot connect to name server: " + serverHost);
