@@ -137,7 +137,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 			Node location = search(args.getString("name"));
 			JSONObject result = new JSONObject();
 			if(location == null){
-				noNameExep(args.getString("name"));
+				return noNameExep(args.getString("name"));
 			}else if(location.type.equals("NS")) {
 				if(location.dirty)
 					return noAddressExep(args.getString("name"));

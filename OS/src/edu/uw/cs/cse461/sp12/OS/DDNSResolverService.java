@@ -204,7 +204,7 @@ public class DDNSResolverService extends RPCCallable {
 		}
 		@Override
 		public void run() {
-			int ttl;
+			int ttl = 10;
 			boolean registered = false;
 			while (update) {
 				try {
@@ -216,11 +216,13 @@ public class DDNSResolverService extends RPCCallable {
 						registered = true;
 					}
 				} catch (DDNSException e) {
-					e.printStackTrace();
-					break;
+					//e.printStackTrace();
+					Log.e("Register Thread - " + request, "Couldn't register!");
+					//break;
 				} catch (JSONException je) {
 					je.printStackTrace();
-					break;
+					Log.e("Register Thread - " + request, "Error while registering!");
+					//break;
 				}
 				
 				int updateTime = Math.abs(ttl - (int) (ttl * .5));

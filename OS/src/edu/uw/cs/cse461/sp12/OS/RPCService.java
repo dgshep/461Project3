@@ -196,6 +196,12 @@ public class RPCService extends RPCCallable {
 				} catch (Exception e) {
 					e.printStackTrace();
 					System.out.println(e.getMessage());
+					try {
+						user.close();
+					} catch (Exception e1) {
+						e1.printStackTrace();
+					}
+					user = null;
 					break;
 				}
 			}
