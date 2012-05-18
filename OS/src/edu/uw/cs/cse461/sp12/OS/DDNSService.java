@@ -75,17 +75,19 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 			JSONObject result = new JSONObject();
 			if(location == null){
 				noNameExep(args.getString("name"));
-			}else if(location.type.equals("NS") || location.type.equals("CNAME")) {
+			}else if(location.type.equals("NS")) {
 				if(location.dirty)
 					return noAddressExep(args.getString("name"));
 				result.put("done", false);
 			} else {
-				result.put("done", true);
-				result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
-				try{
-					location.register(args.getString("ip"), args.getInt("port"));
-				}catch(Exception e) {
-					return runtimeExep(args.getString("name"), "incorrect arguments");
+				if(args.getString("name").equals(location.name)){
+					result.put("done", true);
+					result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
+					try{
+						location.register(args.getString("ip"), args.getInt("port"));
+					}catch(Exception e) {
+						return runtimeExep(args.getString("name"), "incorrect arguments");
+					}
 				}
 			}
 			result.put("node", location.toJSON());
