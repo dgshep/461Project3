@@ -30,7 +30,6 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	public DDNSService() throws Exception {
 		//Read in config file for tree
 		//Fill out storage tree
-		
 		register = new RPCCallableMethod<DDNSService>(this, "_register");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "register", register);
 		unregister = new RPCCallableMethod<DDNSService>(this, "_unregister");
@@ -38,16 +37,15 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		resolve = new RPCCallableMethod<DDNSService>(this, "_resolve");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "resolve", resolve);
 		
-//		root = new RPCCallerSocket(OS.config().getProperty("ddns.rootserver"), 
-//				OS.config().getProperty("ddns.rootserver"), OS.config().getProperty("ddns.rootport"));
-		
-		
 		nodes = new TreeMap<String, Node>();
 		String[] namespace = OS.config().getProperty("ddns.namespace").split(",");
+		//System.out.println("fuck");
 		for(String s : namespace) {
 			String type = OS.config().getProperty(s);
+			//System.out.println(type);
 			nodes.put(s, new Node(s, type));
 			if(type.equals("CNAME")) {
+				//System.out.println("yea");
 				nodes.get(s).alias=OS.config().getProperty(s + "CNAME");
 			}
 		}
