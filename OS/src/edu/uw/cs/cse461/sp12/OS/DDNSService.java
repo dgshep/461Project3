@@ -309,7 +309,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		public String toString(){
 			StringBuilder out = new StringBuilder();
 			if(type.equals("CNAME")){
-				out.append("[Type: CNAME" + type + " Alias: " + alias + "]");		
+				out.append("[Type: CNAME Alias: " + alias + "]");		
 			}else if (!dirty) {
 				out.append("[Type: " + type);
 				out.append(" IP: " + ip);
