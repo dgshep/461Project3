@@ -308,14 +308,12 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		
 		public String toString(){
 			StringBuilder out = new StringBuilder();
-			if (!dirty) {
+			if(type.equals("CNAME")){
+				out.append("[Type: CNAME" + type + " Alias: " + alias + "]");		
+			}else if (!dirty) {
 				out.append("[Type: " + type);
-				if (type.equals("CNAME")) {
-					out.append(" Alias: " + alias);
-				} else {
-					out.append(" IP: " + ip);
-					out.append(" Port : " + port);
-				}
+				out.append(" IP: " + ip);
+				out.append(" Port : " + port);
 				out.append("]");
 			} else {
 				out.append("[No current address]");
