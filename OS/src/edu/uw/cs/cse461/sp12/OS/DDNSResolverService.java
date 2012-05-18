@@ -191,7 +191,7 @@ public class DDNSResolverService extends RPCCallable {
 			boolean registered = false;
 			while (update) {
 				try {
-					Log.i("Register Thread", request.getString("name"));
+					//Log.i("Register Thread", request.getString("name"));
 					JSONObject ret = process("register", this.request);
 					ttl = ret.getInt("lifetime");
 					if (!registered) {

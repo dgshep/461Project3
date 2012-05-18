@@ -86,7 +86,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 				result.put("done", false);
 			} else {
 				result.put("done", true);
-				result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.chachettl")));
+				result.put("lifetime", Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
 				try{
 					location.register(args.getString("ip"), args.getInt("port"));
 				}catch(Exception e) {
@@ -281,6 +281,7 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		public void register(String ip, int port) {
 			this.ip = ip;
 			this.port = port;
+			this.dirty = false;
 			t.cancel();
 			t = new Timer();
 			t.schedule(new unreg(), 1000 * Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
