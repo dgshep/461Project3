@@ -12,7 +12,11 @@ import org.apache.commons.cli.HelpFormatter;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.PosixParser;
 
+import edu.uw.cs.cse461.sp12.OS.DDNSException;
+import edu.uw.cs.cse461.sp12.OS.DDNSFullName;
+import edu.uw.cs.cse461.sp12.OS.DDNSResolverService;
 import edu.uw.cs.cse461.sp12.OS.OS;
+import edu.uw.cs.cse461.sp12.OS.RPCService;
 import edu.uw.cs.cse461.sp12.util.Log;
 
 /**
@@ -80,6 +84,9 @@ public class AppManager {
 		// boot the OS and load RPC services
 		OS.boot(config);
 		OS.startServices(OS.allServiceClasses);
+		DDNSFullName ddnsName = new DDNSFullName(OS.hostname());
+		int port = ((RPCService) OS.getService("rpc")).localPort();
+		((DDNSResolverService) OS.getService("ddnsresolver")).register(ddnsName, port);
 	}
 
 	/**
@@ -141,7 +148,14 @@ public class AppManager {
 				Log.e(TAG, "shutdown caught exception: " + e.getMessage());
 			}
 		}
+		DDNSFullName ddnsName = new DDNSFullName(OS.hostname());
+		try {
+			((DDNSResolverService) OS.getService("ddnsresolver")).unregister(ddnsName);
+		} catch (DDNSException e) {
+			Log.e("Shutdown", "Couldn't unregister!");
+		}
 		OS.shutdown();
+		
 	}
 	
 	public static void main(String[] args) {
