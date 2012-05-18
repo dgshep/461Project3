@@ -145,29 +145,36 @@ public class AndroidPingActivity extends Activity {
     	try {
 			socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
 		} catch(UnknownHostException e){
-			DDNSRRecord record = null;
-			try {
-				record = ((DDNSResolverService) OS.getService("ddnsresolver")).resolve(mServerHost);
-			} catch (DDNSNoAddressException nae) {
-				runOnUiThread(new outputUpdater("No address is currently assoicated with the name: " + mServerHost + "\n"));
-				return null;
-			} catch (DDNSNoSuchNameException nsne) {
-				runOnUiThread(new outputUpdater("No such name: " + mServerHost  + "\n"));
-				return null;
-			} catch (Exception genE) {
-				runOnUiThread(new outputUpdater("Exception: " + genE.getMessage() + "\n"));
-				return null;
-			}
-			try {
-				socket = new RPCCallerSocket(mServerHost, record.host, record.port);
-			} catch (Exception e1) {
-				e1.printStackTrace();
-				return null;
-			} 
+			socket = resolve();
+		} catch(SocketException se){
+			socket = resolve();
 		} catch (Exception e2) {
 			runOnUiThread(new outputUpdater(e2.getMessage()));
 			return null;
 		}
+		return socket;
+    }
+    private RPCCallerSocket resolve(){
+    	RPCCallerSocket socket;
+    	DDNSRRecord record = null;
+		try {
+			record = ((DDNSResolverService) OS.getService("ddnsresolver")).resolve(mServerHost);
+		} catch (DDNSNoAddressException nae) {
+			runOnUiThread(new outputUpdater("No address is currently assoicated with the name: " + mServerHost + "\n"));
+			return null;
+		} catch (DDNSNoSuchNameException nsne) {
+			runOnUiThread(new outputUpdater("No such name: " + mServerHost  + "\n"));
+			return null;
+		} catch (Exception genE) {
+			runOnUiThread(new outputUpdater("Exception: " + genE.getMessage() + "\n"));
+			return null;
+		}
+		try {
+			socket = new RPCCallerSocket(mServerHost, record.host, record.port);
+		} catch (Exception e1) {
+			runOnUiThread(new outputUpdater("Exception: " + e1.getMessage() + "\n"));
+			return null;
+		} 
 		return socket;
     }
     public void whoami(View v) throws IOException, JSONException {
