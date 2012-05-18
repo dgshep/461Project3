@@ -60,6 +60,7 @@ public class AndroidPingActivity extends Activity {
        config.put("ddns.password", "champ");
        config.put("rpc.serverport", "46120");
        config.put("host.name", "galaxy.hallshep.cse461");
+       config.put("ddns.resolvesteps","10");
 		// boot the OS and load RPC services
 		try {
 			OS.boot(config);

@@ -138,6 +138,7 @@ public class AppManager {
 			if ( app == null ) System.out.println("No such app: " + appName);
 			else app.run();
 		}
+		shutdown();
 	}
 	
 	public void shutdown() {
@@ -147,12 +148,6 @@ public class AppManager {
 			} catch (Exception e) {
 				Log.e(TAG, "shutdown caught exception: " + e.getMessage());
 			}
-		}
-		DDNSFullName ddnsName = new DDNSFullName(OS.hostname());
-		try {
-			((DDNSResolverService) OS.getService("ddnsresolver")).unregister(ddnsName);
-		} catch (DDNSException e) {
-			Log.e("Shutdown", "Couldn't unregister!");
 		}
 		OS.shutdown();
 		
