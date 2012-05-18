@@ -160,13 +160,14 @@ public class DDNSResolverService extends RPCCallable {
 						break;
 					}
 					node = response.getJSONObject("node");
-					ip = node.getString("ip");
-					port = node.getInt("port");
 					recordType = node.getString("type");
 					if(recordType.equals("CNAME")){
 						request.put("name", node.get("alias"));
 						serverHost = rootDNSServer;
 						serverPort = Integer.parseInt(rootDNSPort);
+					} else {
+						ip = node.getString("ip");
+						port = node.getInt("port");
 					}
 					if(recordType.equals("NS")) {
 						serverHost = ip;
