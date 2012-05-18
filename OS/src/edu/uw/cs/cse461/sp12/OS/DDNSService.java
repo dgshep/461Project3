@@ -47,12 +47,9 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		for(String s : namespace) {
 			String type = OS.config().getProperty(s);
 			nodes.put(s, new Node(s, type));
-//				if(type.equals("SOA")){
-//					Node soa = new Node(s, type);
-//					soa.ip = soaIp;
-//					soa.port = soaPort;
-//					nodes.put(s, soa);
-//			}
+			if(type.equals("CNAME")) {
+				nodes.get(s).alias=OS.config().getProperty(s + "CNAME");
+			}
 		}
 		
 	}
