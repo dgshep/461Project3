@@ -20,6 +20,7 @@ import android.view.inputmethod.InputMethodManager;
 import android.widget.TextView;
 
 import edu.uw.cs.cse461.sp12.OS.DDNSException;
+import edu.uw.cs.cse461.sp12.OS.DDNSFullName;
 import edu.uw.cs.cse461.sp12.OS.DDNSRRecord;
 import edu.uw.cs.cse461.sp12.OS.DDNSResolverService;
 import edu.uw.cs.cse461.sp12.OS.OS;
@@ -67,6 +68,13 @@ public class AndroidPingActivity extends Activity {
 			throw new IllegalStateException("OS Hasn't booted!");
 		}
 		OS.startServices(OS.androidServiceClasses);
+		DDNSFullName ddnsName = new DDNSFullName(OS.hostname());
+		int port = ((RPCService) OS.getService("rpc")).localPort();
+		try {
+			((DDNSResolverService) OS.getService("ddnsresolver")).register(ddnsName, port);
+		} catch (DDNSException e) {
+			Log.e("DDNS Register", "Couldnt Register this device!: " + e.getMessage());
+		}
    }
 
     /**
@@ -75,7 +83,13 @@ public class AndroidPingActivity extends Activity {
     @Override
     protected void onStop() {
     	super.onStop();
-    	//OS.shutdown();
+		DDNSFullName ddnsName = new DDNSFullName(OS.hostname());
+    	try {
+			((DDNSResolverService) OS.getService("ddnsresolver")).unregister(ddnsName);
+		} catch (DDNSException e) {
+			Log.e("Shutdown", "Couldn't unregister this device!");
+		}
+    	OS.shutdown();
     	SharedPreferences settings = getSharedPreferences(PREFS_NAME, 0);
     	SharedPreferences.Editor editor = settings.edit();
     	editor.putString("serverhost", mServerHost);
