@@ -143,7 +143,10 @@ public class DDNSResolverService extends RPCCallable {
 		JSONObject node = null;
 		RPCCallerSocket caller;
 		try{
-			while(true){
+			int i = 0;
+			int maxResolutions = Integer.parseInt(OS.config().getProperty("ddns.resolvesteps"));
+			while(i < maxResolutions){
+				i++;
 				caller = new RPCCallerSocket(serverHost, serverHost, serverPort);
 				response = caller.invoke("ddns", method, request);
 				resultType = response.getString("resulttype");
@@ -152,7 +155,6 @@ public class DDNSResolverService extends RPCCallable {
 					int failType = response.getInt("exceptionnum");
 					String failMessage = response.getString("message");
 					throwException(failType, failMessage);
-					throw new DDNSException(failMessage);
 				} else {
 					done = response.getBoolean("done");
 					if(done){ // || response.getJSONObject("node").getString("name").equals(request.getString("name")))  break; //
@@ -190,6 +192,7 @@ public class DDNSResolverService extends RPCCallable {
 		else if(failType == 4) throw new DDNSRuntimeException(failMessage);
 		else if(failType == 5) throw new DDNSTTLExpiredException(failMessage);
 		else if(failType == 6) throw new DDNSZoneException(failMessage);
+		else throw new DDNSException(failMessage);
 	}
 	public class RegThread implements Runnable{
 		JSONObject request;
