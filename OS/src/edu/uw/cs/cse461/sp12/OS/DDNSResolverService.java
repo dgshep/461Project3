@@ -4,6 +4,8 @@ import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -60,10 +62,24 @@ public class DDNSResolverService extends RPCCallable {
 			JSONObject ret = process("resolve", request).getJSONObject("node");
 			DDNSRRecord r = new DDNSRRecord(ret.getString("type"), targetStr, ret.getString("ip"), ret.getInt("port"));
 			cache.put(new DDNSFullName(targetStr), r); //Cache miss
+			RemoveEntry re = new RemoveEntry(targetName);
+			Timer t = new Timer();
+			t.schedule(re, 1000 * Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
 			return r;
 		} catch (JSONException e) {
 			Log.e("Resolve", "Return message is garbled...");
 			return null;
+		}
+	}
+	public class RemoveEntry extends TimerTask {
+		
+		private DDNSFullName key;
+
+		public RemoveEntry(DDNSFullName key){
+			this.key = key;
+		}
+		public void run(){
+			cache.remove(key);
 		}
 	}
 	
@@ -131,7 +147,8 @@ public class DDNSResolverService extends RPCCallable {
 				caller = new RPCCallerSocket(serverHost, serverHost, serverPort);
 				response = caller.invoke("ddns", method, request);
 				resultType = response.getString("resulttype");
-				if(resultType.equals("ddnsexception")){
+				if(resultType.equals("ddnsexception")){ //If return type is a failure
+					caller.close();
 					int failType = response.getInt("exceptionnum");
 					String failMessage = response.getString("message");
 					throwException(failType, failMessage);

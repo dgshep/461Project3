@@ -101,9 +101,6 @@ public class OS {
 				serviceMap.put(service.servicename(), service);
 				Log.i(TAG, serviceClassname + " started");
 			}
-			DDNSFullName ddnsName = new DDNSFullName(mHostname);
-			int port = ((RPCService) getService("rpc")).localPort();
-			((DDNSResolverService) getService("ddnsresolver")).register(ddnsName, port);
 		} catch (Exception e) {
 			Log.e(TAG, "Error while starting service " + startingService + ": " + e.getMessage());
 			shutdown();
@@ -118,8 +115,6 @@ public class OS {
 	public static synchronized void shutdown() {
 		if ( mAmShutdown ) return;
 		try {
-			DDNSFullName ddnsName = new DDNSFullName(mHostname);
-			((DDNSResolverService) getService("ddnsresolver")).unregister(ddnsName);
 			for ( String serviceName : serviceMap.keySet() ) {
 				RPCCallable service = serviceMap.get(serviceName);
 				service.shutdown();
