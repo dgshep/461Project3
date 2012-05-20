@@ -179,7 +179,7 @@ public class RPCService extends RPCCallable {
 		
 		@SuppressWarnings("rawtypes")
 		public UserConnection(Socket user, Map<String, RPCCallableMethod> callbacks) throws IOException {
-			//System.out.println("connection made");
+			Log.i("\nRPC Server", "Connection made: " + user.getInetAddress().getHostAddress());
 			handler = new TCPMessageHandler(user);
 			handshook = false;
 			id = 1;
@@ -205,7 +205,7 @@ public class RPCService extends RPCCallable {
 					break;
 				}
 			}
-			//Log.i("RPC Server", "User connection has closed.");
+			Log.i("\nRPC Server", "User connection has closed.");
 		}
 		
 		public void parseMessage(JSONObject json) throws Exception{

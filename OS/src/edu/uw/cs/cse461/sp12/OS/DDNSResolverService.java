@@ -144,16 +144,15 @@ public class DDNSResolverService extends RPCCallable {
 				i++;
 				caller = new RPCCallerSocket(serverHost, serverHost, serverPort);
 				response = caller.invoke("ddns", method, request);
+				caller.close();
 				resultType = response.getString("resulttype");
 				if(resultType.equals("ddnsexception")){ //If return type is a failure
-					caller.close();
 					int failType = response.getInt("exceptionnum");
 					String failMessage = response.getString("message");
 					throwException(failType, failMessage);
 				} else {
 					done = response.getBoolean("done");
 					if(done){ // || response.getJSONObject("node").getString("name").equals(request.getString("name")))  break; //
-						caller.close();
 						break;
 					}
 					node = response.getJSONObject("node");
@@ -171,7 +170,6 @@ public class DDNSResolverService extends RPCCallable {
 						serverPort = port;
 					}
 				}
-				caller.close();
 			}
 			if(!done) throw new DDNSException("Couldn't Resolve name (possible loop)");
 			return response;
@@ -179,7 +177,7 @@ public class DDNSResolverService extends RPCCallable {
 			throw new DDNSException("Cannot connect to name server: " + serverHost);
 		} catch(JSONException je){
 			throw new DDNSException("JSON related communication error");
-		}	
+		}
 	}
 	private void throwException(int failType, String failMessage) throws DDNSException{
 		if(failType == 1) throw new DDNSNoSuchNameException(failMessage);
