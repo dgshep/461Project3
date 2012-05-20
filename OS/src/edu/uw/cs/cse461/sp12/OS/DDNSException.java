@@ -1,5 +1,6 @@
 package edu.uw.cs.cse461.sp12.OS;
 
+@SuppressWarnings("serial")
 public class DDNSException extends Exception {
 
 	public DDNSException(String string) {

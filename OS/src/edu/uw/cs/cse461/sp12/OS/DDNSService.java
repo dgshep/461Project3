@@ -1,20 +1,16 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
-import java.net.UnknownHostException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Timer;
 import java.util.TimerTask;
 import java.util.TreeMap;
 
-import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import edu.uw.cs.cse461.sp12.OS.HTTPDService.HTTPProvider;
-import edu.uw.cs.cse461.sp12.OS.RPCCallable.RPCCallableMethod;
 
 public class DDNSService extends RPCCallable implements HTTPProvider {
 
@@ -22,10 +18,10 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 	private RPCCallableMethod<DDNSService> unregister;
 	private RPCCallableMethod<DDNSService> resolve;
 	
-	private RPCCallerSocket root;
+	//private RPCCallerSocket root;
 	private Map<String, Node> nodes;
-	private String soaIp = ((RPCService)OS.getService("rpc")).localIP();
-	private int soaPort = ((RPCService)OS.getService("rpc")).localPort();
+	//private String soaIp = ((RPCService)OS.getService("rpc")).localIP();
+	//private int soaPort = ((RPCService)OS.getService("rpc")).localPort();
 	
 	public DDNSService() throws Exception {
 		//Read in config file for tree
@@ -59,7 +55,9 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 
 	@Override
 	public void shutdown() {
-
+		for(Node n : nodes.values()){
+			n.t.cancel();
+		}
 	}
 	
 	public JSONObject _register(JSONObject args) throws JSONException, IOException {
@@ -236,16 +234,16 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 			}catch(Exception e) {return null;}
 	}
 	
-	private JSONObject expiredExep(String name) {
-		try{
-			JSONObject result = new JSONObject();
-			result.put("resulttype", "ddnsexception");
-			result.put("exceptionnum", 5);
-			result.put("name", name);
-			result.put("message", "step limit exceeded before resolution");
-			return result;
-			}catch(Exception e) {return null;}
-	}
+//	private JSONObject expiredExep(String name) {
+//		try{
+//			JSONObject result = new JSONObject();
+//			result.put("resulttype", "ddnsexception");
+//			result.put("exceptionnum", 5);
+//			result.put("name", name);
+//			result.put("message", "step limit exceeded before resolution");
+//			return result;
+//			}catch(Exception e) {return null;}
+//	}
 	
 	private JSONObject zoneExep(String name) {
 		try{

@@ -53,7 +53,7 @@ public class AndroidPingActivity extends Activity {
    private void bootOS(){
 	   Properties config = new Properties();
        config.put("host.name", "foo.bar.");
-       config.put("rpc.timeout", "10000");
+       config.put("rpc.timeout", "2000");
        config.put("ddns.cachettl", "60");
        config.put("ddns.rootserver", "cse461.cs.washington.edu");
        config.put("ddns.rootport", "46130");

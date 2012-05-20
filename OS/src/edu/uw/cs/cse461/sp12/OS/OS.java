@@ -55,7 +55,6 @@ public class OS {
 	private static Properties mConfig;
 	private static String mHostname;
 	
-	private static Thread regThread;
 	
 	/**
 	 * Brings up the OS.  Doesn't start any services.  Call startServices() for that.
