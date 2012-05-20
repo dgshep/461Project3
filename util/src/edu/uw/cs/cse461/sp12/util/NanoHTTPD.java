@@ -68,6 +68,8 @@ import java.io.FileOutputStream;
  * See the end of the source file for distribution license
  * (Modified BSD licence)
  */
+@SuppressWarnings({ "rawtypes", "unchecked" })
+
 public class NanoHTTPD
 {
 	// ==================================================
@@ -816,6 +818,7 @@ public class NanoHTTPD
 	 * URL-encodes everything between "/"-characters.
 	 * Encodes spaces as '%20' instead of '+'.
 	 */
+	@SuppressWarnings("deprecation")
 	private String encodeUri( String uri )
 	{
 		String newUri = "";

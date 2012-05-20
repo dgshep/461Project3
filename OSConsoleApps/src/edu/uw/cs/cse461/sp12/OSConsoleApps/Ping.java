@@ -2,16 +2,26 @@ package edu.uw.cs.cse461.sp12.OSConsoleApps;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
+import java.net.SocketException;
+import java.net.UnknownHostException;
 
 import org.json.JSONObject;
 
+
+
+import edu.uw.cs.cse461.sp12.OS.DDNSRRecord;
+import edu.uw.cs.cse461.sp12.OS.DDNSResolverService;
+import edu.uw.cs.cse461.sp12.OS.OS;
 import edu.uw.cs.cse461.sp12.OS.RPCCallerSocket;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoAddressException;
+import edu.uw.cs.cse461.sp12.OS.DDNSException.DDNSNoSuchNameException;
 import edu.uw.cs.cse461.sp12.util.Log;
 
 public class Ping implements OSConsoleApp {
 
 	private static final String TAG="PingConsole";
-	
+	private String mServerHost;
+	private String mServerPort;
 	@Override
 	public String appname() {
 		return "ping";
@@ -27,23 +37,24 @@ public class Ping implements OSConsoleApp {
 			while ( true ) {
 				try {
 					System.out.print("Enter a host ip, or exit to exit: ");
-					String targetIP = console.readLine();
-					if ( targetIP == null ) targetIP = "";
-					else if ( targetIP.equals("exit")) break;
+					mServerHost = console.readLine();
+					if ( mServerHost == null ) mServerHost = "";
+					else if ( mServerHost.equals("exit")) break;
 
-					System.out.print("Enter the RPC port, or empty line to exit: ");
-					String targetPort = console.readLine();
-					if ( targetPort == null || targetPort.isEmpty() ) continue;
+					System.out.print("Enter the RPC port, or empty line: ");
+					mServerPort = console.readLine();
+					if ( mServerPort == null || mServerPort.isEmpty() ) mServerPort = "0";
 					RPCCallerSocket socket;
-					try {
-						socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
-					} catch(NumberFormatException e) {
-						continue;
-					}
+					socket = getSocket();
+					if(socket == null) continue;
 					long time = System.currentTimeMillis();
 					long newTime = time;
 					long overall = 0;
 					int runs = 5;
+					String host = socket.remotehost();
+					String ip = socket.getInetAddress().getHostAddress();
+					int port = socket.getPort();
+					Log.i("Ping","Pinging " + host + " @ " + ip + ":" + port + "\n\n");
 					for(int i = 0; i < runs; i++){
 						time = System.currentTimeMillis();
 						socket.invoke("echo", "echo", new JSONObject().put("msg", ""));
@@ -53,7 +64,7 @@ public class Ping implements OSConsoleApp {
 						System.out.println("Run #" + i + " (msec): " + diff);
 						if(!socket.isPersistent() && i < runs){
 							socket.close();
-							socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
+							socket = getSocket();
 						}
 						//socket.close();
 						//socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
@@ -69,7 +80,43 @@ public class Ping implements OSConsoleApp {
 			Log.e(TAG, TAG + ".run() caught exception: " + e.getMessage());
 		}
 	}
-
+	private RPCCallerSocket getSocket(){
+    	RPCCallerSocket socket;
+    	try {
+			socket = new RPCCallerSocket(mServerHost, mServerHost, mServerPort);
+		} catch(UnknownHostException e){
+			socket = resolve();
+		} catch(SocketException se){
+			socket = resolve();
+		} catch (Exception e2) {
+			Log.i("Ping", e2.getMessage());
+			return null;
+		}
+		return socket;
+    }
+    private RPCCallerSocket resolve(){
+    	RPCCallerSocket socket;
+    	DDNSRRecord record = null;
+		try {
+			record = ((DDNSResolverService) OS.getService("ddnsresolver")).resolve(mServerHost);
+		} catch (DDNSNoAddressException nae) {
+			Log.i("Ping","No address is currently assoicated with the name: " + mServerHost + "\n");
+			return null;
+		} catch (DDNSNoSuchNameException nsne) {
+			Log.i("Ping","No such name: " + mServerHost  + "\n");
+			return null;
+		} catch (Exception genE) {
+			Log.i("Ping","Exception: " + genE.getMessage() + "\n");
+			return null;
+		}
+		try {
+			socket = new RPCCallerSocket(mServerHost, record.host, record.port);
+		} catch (Exception e1) {
+			Log.i("Ping","Exception: " + e1.getMessage() + "\n");
+			return null;
+		} 
+		return socket;
+    }
 	@Override
 	public void shutdown() throws Exception {
 	}

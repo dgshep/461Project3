@@ -3,7 +3,9 @@ package edu.uw.cs.cse461.sp12.OS;
 import java.io.IOException;
 import java.net.UnknownHostException;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -28,6 +30,7 @@ public class DDNSResolverService extends RPCCallable {
 	private final String password = OS.config().getProperty("ddns.password");
 	private final Map<DDNSFullName, DDNSRRecord> cache = new HashMap<DDNSFullName, DDNSRRecord>();
 	private Map<DDNSFullName, RegThread> regThreads = new HashMap<DDNSFullName, RegThread>();
+	private Set<Timer> timerThreads = new HashSet<Timer>();
 	/**
 	 * The constructor registers RPC-callable methods with the RPCService.
 	 * @throws IOException
@@ -44,13 +47,19 @@ public class DDNSResolverService extends RPCCallable {
 
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
+		for(RegThread r : regThreads.values()){
+			r.stopUpdate();
+		}
+		for(Timer t : timerThreads){
+			t.cancel();
+		}
 
 	}
 	public DDNSRRecord resolve(String targetStr) throws DDNSException{
 		DDNSFullName targetName = new DDNSFullName(targetStr);
 		if(cache.containsKey(targetName)){
-			return cache.get(targetName); // Cache hit
+			Log.i("DDNS Resolve", "Cached value.");// Cache hit
+			return cache.get(targetName);
 		}
 		JSONObject request = new JSONObject();
 		try {
@@ -64,6 +73,7 @@ public class DDNSResolverService extends RPCCallable {
 			cache.put(new DDNSFullName(targetStr), r); //Cache miss
 			RemoveEntry re = new RemoveEntry(targetName);
 			Timer t = new Timer();
+			timerThreads.add(t);
 			t.schedule(re, 1000 * Integer.parseInt(OS.config().getProperty("ddns.cachettl")));
 			return r;
 		} catch (JSONException e) {
@@ -126,7 +136,7 @@ public class DDNSResolverService extends RPCCallable {
 		}
 		return ip;
 	}
-	private JSONObject process(String method, JSONObject request) throws DDNSException{
+	private synchronized JSONObject process(String method, JSONObject request) throws DDNSException{
 		String resultType = "";
 		String recordType = "";
 		boolean done = false;
@@ -152,7 +162,7 @@ public class DDNSResolverService extends RPCCallable {
 					throwException(failType, failMessage);
 				} else {
 					done = response.getBoolean("done");
-					if(done){ // || response.getJSONObject("node").getString("name").equals(request.getString("name")))  break; //
+					if(done){
 						break;
 					}
 					node = response.getJSONObject("node");
@@ -214,13 +224,10 @@ public class DDNSResolverService extends RPCCallable {
 						registered = true;
 					}
 				} catch (DDNSException e) {
-					//e.printStackTrace();
 					Log.e("Register Thread - " + request, "Couldn't register!");
-					//break;
 				} catch (JSONException je) {
 					je.printStackTrace();
 					Log.e("Register Thread - " + request, "Error while registering!");
-					//break;
 				}
 				
 				int updateTime = Math.abs(ttl - (int) (ttl * .5));
@@ -231,7 +238,6 @@ public class DDNSResolverService extends RPCCallable {
 						sleepTime += 1;
 					}
 				} catch (InterruptedException e) {
-					// TODO Auto-generated catch block
 					e.printStackTrace();
 				}
 			}
