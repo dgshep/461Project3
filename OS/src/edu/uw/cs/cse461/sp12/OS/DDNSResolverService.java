@@ -230,7 +230,7 @@ public class DDNSResolverService extends RPCCallable {
 				} catch (JSONException je) {
 					je.printStackTrace();
 					Log.e("Register Thread - " + request, "Error while registering!");
-					//break;
+					//dbreak;
 				}
 				
 				int updateTime = Math.abs(ttl - (int) (ttl * .5));

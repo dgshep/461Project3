@@ -10,7 +10,9 @@ import java.net.UnknownHostException;
 import java.util.Collections;
 import java.util.Enumeration;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -147,10 +149,11 @@ public class RPCService extends RPCCallable {
 	private class ServerConnection implements Runnable {
 
 		private ServerSocket connection;
-		
+		private Set<Thread> userThreads;
 		@SuppressWarnings("rawtypes")
 		public ServerConnection(ServerSocket connection, Map<String, RPCCallableMethod> callbacks) {
 			this.connection = connection;
+			this.userThreads = new HashSet<Thread>();
 		}
 		
 		public void run() {
@@ -162,7 +165,9 @@ public class RPCService extends RPCCallable {
 //							+ newUser.getInetAddress().getHostAddress()
 //							+ ":" + newUser.getLocalPort());
 					UserConnection thread = new UserConnection(newUser, callbacks);
-					thread.run();
+					Thread t = new Thread(thread);
+					t.start();
+					userThreads.add(t);
 				} catch (IOException e) {
 					//Log.i("Server Connection","IOException: " + e.getMessage());
 				} catch (Exception ge) {
@@ -195,21 +200,21 @@ public class RPCService extends RPCCallable {
 			// TODO Auto-generated method stub
 			while(!user.isClosed()) {
 				try {
+					Log.i("User Socket", user.getInetAddress().getHostAddress()
+							+ ": Thread: " + Thread.currentThread() + " Reading message...");
 					parseMessage(handler.readMessageAsJSONObject());
+					Log.i("User Socket", "Message Read!");
 				} catch (IOException e) {
 					break; //Socket has been closed on the other end.
 				} catch (Exception e) {
 					e.printStackTrace();
-					System.out.println(e.getMessage());
-					try {
-						user.close();
-					} catch (Exception e1) {
-						e1.printStackTrace();
-					}
+					//System.out.println(e.getMessage());
+					
 					//user = null;
 					break;
 				}
 			}
+			handler.discard();
 			//Log.i("\nRPC Server", "User connection has closed.");
 		}
 		
