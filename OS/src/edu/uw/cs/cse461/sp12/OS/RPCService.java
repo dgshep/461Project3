@@ -163,7 +163,12 @@ public class RPCService extends RPCCallable {
 //							+ ":" + newUser.getLocalPort());
 					UserConnection thread = new UserConnection(newUser, callbacks);
 					thread.run();
-				} catch (IOException e) {}
+				} catch (IOException e) {
+					//Log.i("Server Connection","IOException: " + e.getMessage());
+				} catch (Exception ge) {
+					ge.printStackTrace();
+					Log.i("Server Connection", "Exception: " + ge.getMessage());
+				}
 				
 			}
 		}
@@ -201,7 +206,7 @@ public class RPCService extends RPCCallable {
 					} catch (Exception e1) {
 						e1.printStackTrace();
 					}
-					user = null;
+					//user = null;
 					break;
 				}
 			}

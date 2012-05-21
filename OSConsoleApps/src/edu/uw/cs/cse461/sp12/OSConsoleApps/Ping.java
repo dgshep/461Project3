@@ -22,6 +22,8 @@ public class Ping implements OSConsoleApp {
 	private static final String TAG="PingConsole";
 	private String mServerHost;
 	private String mServerPort;
+	private RPCCallerSocket socket = null;
+
 	@Override
 	public String appname() {
 		return "ping";
@@ -29,7 +31,7 @@ public class Ping implements OSConsoleApp {
 
 	@Override
 	public void run() throws Exception {
-		// TODO Auto-generated method stub
+
 		try {
 			// Eclipse doesn't support System.console()
 			BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
@@ -44,7 +46,6 @@ public class Ping implements OSConsoleApp {
 					System.out.print("Enter the RPC port, or empty line: ");
 					mServerPort = console.readLine();
 					if ( mServerPort == null || mServerPort.isEmpty() ) mServerPort = "0";
-					RPCCallerSocket socket;
 					socket = getSocket();
 					if(socket == null) continue;
 					long time = System.currentTimeMillis();
@@ -78,6 +79,8 @@ public class Ping implements OSConsoleApp {
 			}
 		} catch (Exception e) {
 			Log.e(TAG, TAG + ".run() caught exception: " + e.getMessage());
+		} finally {
+			if (socket != null && !socket.isClosed()) socket.close();
 		}
 	}
 	private RPCCallerSocket getSocket(){
