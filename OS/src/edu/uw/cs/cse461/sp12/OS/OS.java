@@ -112,6 +112,7 @@ public class OS {
 	 * even if the main thread exits.
 	 */
 	public static synchronized void shutdown() {
+		DDNSFullName thisName = new DDNSFullName(OS.config().getProperty("host.name"));
 		if ( mAmShutdown ) return;
 		try {
 			for ( String serviceName : serviceMap.keySet() ) {

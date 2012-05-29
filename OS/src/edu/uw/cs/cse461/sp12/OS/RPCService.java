@@ -155,7 +155,6 @@ public class RPCService extends RPCCallable {
 			this.connection = connection;
 			this.userThreads = new HashSet<Thread>();
 		}
-		
 		public void run() {
 			// TODO Auto-generated method stub
 			while(!connection.isClosed()) {
@@ -164,8 +163,8 @@ public class RPCService extends RPCCallable {
 //					Log.i("Server Connection", "User connected on: " 
 //							+ newUser.getInetAddress().getHostAddress()
 //							+ ":" + newUser.getLocalPort());
-					UserConnection thread = new UserConnection(newUser, callbacks);
-					Thread t = new Thread(thread);
+					UserConnection uc = new UserConnection(newUser, callbacks);
+					Thread t = new Thread(uc);
 					t.start();
 					userThreads.add(t);
 				} catch (IOException e) {
