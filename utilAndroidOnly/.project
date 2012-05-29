@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>OSConsoleApps</name>
+	<name>utilAndroidOnly</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -16,9 +16,9 @@
 	</natures>
 	<linkedResources>
 		<link>
-			<name>utilSource</name>
+			<name>utilsrc</name>
 			<type>2</type>
-			<locationURI>WORKSPACE_LOC/util/src</locationURI>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/util/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>

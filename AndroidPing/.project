@@ -34,12 +34,12 @@
 		<link>
 			<name>OSsrc</name>
 			<type>2</type>
-			<location>/Users/Davis/Dropbox/Spring12/CSE461/461Project3/OS/src</location>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/OS/src</location>
 		</link>
 		<link>
-			<name>UTILsrc</name>
+			<name>Utilsrc</name>
 			<type>2</type>
-			<location>/Users/Davis/Dropbox/Spring12/CSE461/461Project3/util/src</location>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/util/src</location>
 		</link>
 	</linkedResources>
 </projectDescription>

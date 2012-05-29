@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <projectDescription>
-	<name>OSConsoleApps</name>
+	<name>utilConsoleOnly</name>
 	<comment></comment>
 	<projects>
 	</projects>
@@ -14,11 +14,4 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
-	<linkedResources>
-		<link>
-			<name>utilSource</name>
-			<type>2</type>
-			<locationURI>WORKSPACE_LOC/util/src</locationURI>
-		</link>
-	</linkedResources>
 </projectDescription>
