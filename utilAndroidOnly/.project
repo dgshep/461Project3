@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<projectDescription>
+	<name>utilAndroidOnly</name>
+	<comment></comment>
+	<projects>
+	</projects>
+	<buildSpec>
+		<buildCommand>
+			<name>org.eclipse.jdt.core.javabuilder</name>
+			<arguments>
+			</arguments>
+		</buildCommand>
+	</buildSpec>
+	<natures>
+		<nature>org.eclipse.jdt.core.javanature</nature>
+	</natures>
+	<linkedResources>
+		<link>
+			<name>utilsrc</name>
+			<type>2</type>
+			<location>/Applications/eclipse/Eclipse.app/Contents/MacOS/C::/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/util/src</location>
+		</link>
+	</linkedResources>
+</projectDescription>
