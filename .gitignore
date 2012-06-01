@@ -12,6 +12,6 @@ doc
 OS/hallshep.cse461.config.ini
 P4Report.pdf
 AndroidSnet/gen/
-OS/.classpath
-OSConsoleApps/.classpath
-utilConsoleOnly/.classpath
+OS/\.classpath
+OSConsoleApps/\.classpath
+utilConsoleOnly/\.classpath
