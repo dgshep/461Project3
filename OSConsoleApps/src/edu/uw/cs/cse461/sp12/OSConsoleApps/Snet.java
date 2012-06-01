@@ -17,13 +17,20 @@ public class Snet implements OSConsoleApp {
 
 	@Override
 	public void run() throws Exception {
+		//fetchUpdates from root
+		//fetchUpdates from all online
+		//Find all photos I don't have
+		//all fetchUpdates again with neededPhotos
+		//fetchPhotos
+		//
+		
 		try {
 			// Eclipse doesn't support System.console()
 			BufferedReader console = new BufferedReader(new InputStreamReader(System.in));
 			System.out.println("This is console Snet at your service!");
 			while ( true ) {
 				try {
-					System.out.print("Enter a command (: ");
+					System.out.print("Enter a command: ");
 					String targetIP = console.readLine();
 					if ( targetIP == null ) targetIP = "";
 					else if ( targetIP.equals("exit")) break;
@@ -45,7 +52,7 @@ public class Snet implements OSConsoleApp {
 				}
 			}
 		} catch (Exception e) {
-			Log.e(TAG, "EchoConsole.run() caught exception: " +e.getMessage());
+			Log.e(TAG, "SnetConsole.run() caught exception: " +e.getMessage());
 		}
 	}
 

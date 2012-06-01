@@ -2,13 +2,19 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import org.json.JSONObject;
 
+import edu.uw.cs.cse461.sp12.DB461.DB461.DB461Exception;
+
 
 
 public class SnetController extends RPCCallable {
 	private SNetDB461 db;
 	
 	public SnetController() {
-		//TODO Init DB
+		try {
+			db = new SNetDB461();
+		} catch (DB461Exception e) {
+			e.printStackTrace();
+		}
 	}
 	@Override
 	public String servicename() {
@@ -27,7 +33,13 @@ public class SnetController extends RPCCallable {
 		return null;
 	}
 	
+	public void fetchUpdates(String name) {
+		
+	}
 	
+	public byte[] fetchPhoto(int photoHash) {
+		return null;
+	}
 	
 
 }
