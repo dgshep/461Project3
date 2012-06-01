@@ -23,7 +23,7 @@ public class Snet implements OSConsoleApp {
 			System.out.println("This is console Snet at your service!");
 			while ( true ) {
 				try {
-					System.out.print("Enter a host ip, or exit to exit: ");
+					System.out.print("Enter a command (: ");
 					String targetIP = console.readLine();
 					if ( targetIP == null ) targetIP = "";
 					else if ( targetIP.equals("exit")) break;

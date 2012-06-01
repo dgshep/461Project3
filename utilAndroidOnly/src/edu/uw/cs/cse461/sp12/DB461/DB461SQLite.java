@@ -9,7 +9,6 @@ import android.database.sqlite.SQLiteOpenHelper;
 import edu.uw.cs.cse461.sp12.DB461.DB461;
 import edu.uw.cs.cse461.sp12.DB461.DB461.DB461Exception;
 import edu.uw.cs.cse461.sp12.DB461.DB461.DBRecordIterator;
-import edu.uw.cs.cse461.sp12.OS.ContextManager;
 import edu.uw.cs.cse461.sp12.util.Log;
 
 //----------------------------------------
@@ -54,7 +53,8 @@ public class DB461SQLite extends DB461 {
 		public boolean needCreate;
 		
 		public DBOpenHelper(String dbName) {
-			super(ContextManager.getContext(), dbName, null, DBVERSION);
+			//super(ContextManager.getContext(), dbName, null, DBVERSION);
+			super(null, dbName, null, DBVERSION); //FUCK OFF
 		}
 		
 		@Override

@@ -1,4 +1,4 @@
-package edu.uw.cs.cse461.sp12.SNetDB;
+package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.File;
 import java.io.FileInputStream;
@@ -11,8 +11,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 
 import edu.uw.cs.cse461.sp12.DB461.DB461SQLite;
-import edu.uw.cs.cse461.sp12.OS.DDNSFullName;
-import edu.uw.cs.cse461.sp12.OS.OS;
 import edu.uw.cs.cse461.sp12.util.Log;
 
 /**
