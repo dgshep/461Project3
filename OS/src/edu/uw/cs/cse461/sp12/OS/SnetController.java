@@ -161,7 +161,7 @@ public class SnetController extends RPCCallable {
 			return null;
 
 		} finally {
-			if(db != null) db.discard();
+			discard();
 		}
 		
 	}
@@ -199,11 +199,11 @@ public class SnetController extends RPCCallable {
 			DDNSRRecord rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
 			RPCCallerSocket sock = new RPCCallerSocket(rr.name, rr.host, rr.port);
 			JSONObject request = new JSONObject();
+			db.openOrCreateDatabase();
 			request.put("community", communityToJSON());
 			request.put("needphotos", neededPhotos());
 			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
 			JSONObject commUpdates = response.getJSONObject("communityupdates");
-			db.openOrCreateDatabase();
 			for(Iterator<String> it = commUpdates.keys(); it.hasNext();) {
 				String key = it.next();
 				JSONObject memberUpdate = commUpdates.getJSONObject(key);
@@ -239,37 +239,74 @@ public class SnetController extends RPCCallable {
 		}
 	}
 	
-	private JSONObject communityToJSON() throws DB461Exception, JSONException {
-		JSONObject result = new JSONObject();
+	public void fetchPhoto(String name, int photoHash) throws IllegalStateException {
+		if(photoDir != null)
+			throw new IllegalStateException("Set Photo Directory First!");
+		
+		DDNSRRecord rr;
 		try {
+			rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
+			RPCCallerSocket sock = new RPCCallerSocket(rr.host, rr.host, rr.port);
+			JSONObject request = new JSONObject();
+			request.put("photohash", photoHash);
+			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
+			byte[] bitmap = Base64.decode(response.getString("photodata"));
 			db.openOrCreateDatabase();
-			for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
-				JSONObject member = new JSONObject();
-				member.put("generation", cr.generation);
-				member.put("myphotohash", cr.myPhotoHash);
-				member.put("chosenphotohash", cr.chosenPhotoHash);
-				result.put(cr.name, member);
-			}
+			//TODO write the rest
 			discard();
-			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
 			discard();
-			return null;
 		}
+	}
+	
+	public boolean addFriend(String name) {
+		//TODO write this
+		return false;
+	}
+	
+	public boolean removeFriend(String name) {
+		//TODO write this
+		return false;
+	}
+	
+	public void newUserPhoto(File location, boolean my) {
+		//TODO write this
+		try {
+			Base64.encodeFromFile(location.toString());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	private JSONObject communityToJSON() throws DB461Exception, JSONException {
+		JSONObject result = new JSONObject();
+		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
+			JSONObject member = new JSONObject();
+			member.put("generation", cr.generation);
+			member.put("myphotohash", cr.myPhotoHash);
+			member.put("chosenphotohash", cr.chosenPhotoHash);
+			result.put(cr.name, member);
+		}
+		return result;
+	}
+	
+	private JSONArray neededPhotos() throws DB461Exception {
+		JSONArray result = new JSONArray();
+		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
+			if(db.PHOTOTABLE.readOne(cr.myPhotoHash).file == null)
+				result.put(cr.myPhotoHash);
+			if(db.PHOTOTABLE.readOne(cr.chosenPhotoHash).file == null)
+				result.put(cr.chosenPhotoHash);
+		}
+		return result;
 	}
 	
 	private void discard() {
 		if ( db != null ) {
 			db.discard();
 		}
-	}
-	
-	private JSONArray neededPhotos() {
-		//TODO
-		JSONArray result = new JSONArray();
-		
-		return result;
 	}
 	
 	private void changeRef(int hash, int dif) throws DB461Exception {
@@ -290,63 +327,28 @@ public class SnetController extends RPCCallable {
 		}
 	}
 	
-	public boolean addFriend(String name) {
-		//TODO write this
-		return false;
-	}
-	
-	public boolean removeFriend(String name) {
-		//TODO write this
-		return false;
-	}
-	
-	private List<File> getUnusedPhotos(){
-		try{
-			db.openOrCreateDatabase();
-			List<File> result = new LinkedList<File>();
-			for(PhotoRecord pr : db.PHOTOTABLE.readAll()) {
-				if(pr.refCount == 0) {
-					result.add(pr.file);
-				}
-				db.PHOTOTABLE.delete(pr.hash);
-			}
-			return result;
-		} catch (DB461Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} finally {
-			discard();
-		}
-		return null;
-	}
-	
-	public void fetchPhoto(String name, int photoHash) {
-		if(photoDir == null)
-			throw new IllegalStateException("Set Photo Directory First!");
-		
-		DDNSRRecord rr;
-		try {
-			rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
-			RPCCallerSocket sock = new RPCCallerSocket(rr.host, rr.host, rr.port);
-			JSONObject request = new JSONObject();
-			request.put("photohash", photoHash);
-			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
-			byte[] bitmap = Base64.decode(response.getString("photodata"));
-			//TODO write the rest
-		} catch (DDNSException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-	}
+//	private List<File> getUnusedPhotos(){
+//		try{
+//			db.openOrCreateDatabase();
+//			List<File> result = new LinkedList<File>();
+//			for(PhotoRecord pr : db.PHOTOTABLE.readAll()) {
+//				if(pr.refCount == 0) {
+//					result.add(pr.file);
+//				}
+//				db.PHOTOTABLE.delete(pr.hash);
+//			}
+//			return result;
+//		} catch (DB461Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} catch (Exception e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		} finally {
+//			discard();
+//		}
+//		return null;
+//	}
 	
 //	public List<String> getOnlineUsers() {
 //		List<String> names = new LinkedList<String>();
