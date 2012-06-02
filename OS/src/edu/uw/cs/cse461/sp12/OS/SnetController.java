@@ -19,10 +19,8 @@ import edu.uw.cs.cse461.sp12.util.Base64;
 
 public class SnetController extends RPCCallable {
 	
-	//TODO friends
 	private SNetDB461 db;
 	private File photoDir;
-	private int generation;
 	
 	public SnetController() {
 		try {
@@ -31,6 +29,7 @@ public class SnetController extends RPCCallable {
 			if(db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name")) == null) {
 				storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("host.name"), Integer.MIN_VALUE, 0, 0);
 				storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("ddns.rootserver"), Integer.MIN_VALUE, 0, 0);
+				fetchUpdates(OS.config().getProperty("ddns.rootserver"));
 			}
 			photoDir = null;
 		} catch (DB461Exception e) {
@@ -69,8 +68,8 @@ public class SnetController extends RPCCallable {
 			DDNSRRecord rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
 			RPCCallerSocket sock = new RPCCallerSocket(rr.host, rr.host, rr.port);
 			JSONObject request = new JSONObject();
-			//TODO fill out request: {community:{MemberField,...}, needphotos:[int, ...]}
-			//Put community table into JSON, Make neededphotos
+			request.put("community", communityToJSON());
+			request.put("needphotos", neededPhotos());
 			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
 			JSONObject commUpdates = response.getJSONObject("communityupdates");
 			
@@ -110,6 +109,24 @@ public class SnetController extends RPCCallable {
 		return null;
 	}
 	
+	private JSONObject communityToJSON() throws DB461Exception, JSONException {
+		JSONObject result = new JSONObject();
+		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
+			JSONObject member = new JSONObject();
+			member.put("generation", cr.generation);
+			member.put("myphotohash", cr.myPhotoHash);
+			member.put("chosenphotohash", cr.chosenPhotoHash);
+			result.put(cr.name, member);
+		}
+		return result;
+	}
+	
+	private JSONArray neededPhotos() {
+		JSONArray result = new JSONArray();
+		
+		return result;
+	}
+	
 	private void changeRef(int hash, int dif) throws DB461Exception {
 		PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
 		pr.refCount += dif;
@@ -129,6 +146,11 @@ public class SnetController extends RPCCallable {
 	}
 	
 	public boolean addFriend(String name) {
+		//TODO write this
+		return false;
+	}
+	
+	public boolean removeFriend(String name) {
 		//TODO write this
 		return false;
 	}
