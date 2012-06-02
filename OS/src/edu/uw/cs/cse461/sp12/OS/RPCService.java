@@ -199,10 +199,10 @@ public class RPCService extends RPCCallable {
 			// TODO Auto-generated method stub
 			while(!user.isClosed()) {
 				try {
-					Log.i("User Socket", user.getInetAddress().getHostAddress()
-							+ ": Thread: " + Thread.currentThread() + " Reading message...");
+					//Log.i("User Socket", user.getInetAddress().getHostAddress()
+					//		+ ": Thread: " + Thread.currentThread() + " Reading message...");
 					parseMessage(handler.readMessageAsJSONObject());
-					Log.i("User Socket", "Message Read!");
+					//Log.i("User Socket", "Message Read!");
 				} catch (IOException e) {
 					break; //Socket has been closed on the other end.
 				} catch (Exception e) {

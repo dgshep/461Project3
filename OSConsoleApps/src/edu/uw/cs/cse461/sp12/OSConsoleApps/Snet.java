@@ -39,18 +39,11 @@ public class Snet implements OSConsoleApp {
 					if (command.toLowerCase().equals("fetchupdates")){
 						System.out.print("Enter a name to fetchupdates from ");
 						command = console.readLine();
-						JSONArray ret = snet.fetchUpdates(command);
-						System.out.println(ret.toString());
+						snet.fetchUpdates(command, false);
+						System.out.println(snet.toString());
 						continue;
 
 					}
-
-					System.out.print("Enter the RPC port, or empty line to exit: ");
-					String targetPort = console.readLine();
-					if ( targetPort == null || targetPort.isEmpty() ) continue;
-
-					System.out.print("Enter message to be echoed: ");
-					String msg = console.readLine();
 					//System.out.println(targetIP + " " + targetPort + " " + msg);
 					//RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
 					//JSONObject response = socket.invoke("echo", "echo", new JSONObject().put("msg", msg) );

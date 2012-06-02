@@ -380,6 +380,9 @@ public class SnetController extends RPCCallable {
 			changeRef(hash, 1);
 		}
 	}
+	public String toString(){
+		return db.toString();
+	}
 	
 //	private List<File> getUnusedPhotos(){
 //		try{
