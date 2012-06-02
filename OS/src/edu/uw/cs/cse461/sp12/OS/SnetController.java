@@ -203,8 +203,10 @@ public class SnetController extends RPCCallable {
 			db.openOrCreateDatabase();
 			request.put("community", communityToJSON());
 			request.put("needphotos", neededPhotos());
+			discard();
 			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
 			JSONObject commUpdates = response.getJSONObject("communityupdates");
+			db.openOrCreateDatabase();
 			for(Iterator<String> it = commUpdates.keys(); it.hasNext();) {
 				String key = it.next();
 				JSONObject memberUpdate = commUpdates.getJSONObject(key);
@@ -217,6 +219,8 @@ public class SnetController extends RPCCallable {
 					cr.generation = memberUpdate.getInt("generation");
 					cr.myPhotoHash = myHash;
 					cr.chosenPhotoHash = chosenHash;
+					newPhoto(myHash);
+					newPhoto(chosenHash);
 					db.COMMUNITYTABLE.write(cr);
 				} else if(cr.generation < memberUpdate.getInt("generation")) {
 					changeRef(cr.myPhotoHash, -1);
@@ -275,7 +279,9 @@ public class SnetController extends RPCCallable {
 	public boolean addFriend(String name) {
 		try {
 			db.openOrCreateDatabase();
-			
+			CommunityRecord cr = db.COMMUNITYTABLE.readOne(name);
+			cr.isFriend = true;
+			db.COMMUNITYTABLE.write(cr);
 			discard();
 			return true;
 		} catch (Exception e) {
@@ -290,12 +296,32 @@ public class SnetController extends RPCCallable {
 	}
 	
 	public void newUserPhoto(File location, boolean my) {
-		//TODO write this
+		if(photoDir == null)
+			throw new IllegalStateException();
+		
 		try {
-			location.toString();
+			if(location.getParentFile() == photoDir) {
+				db.openOrCreateDatabase();
+				PhotoRecord pr = db.PHOTOTABLE.createRecord();
+				pr.file = location;
+				pr.hash = new Photo(location).hash();
+				pr.refCount = 1;
+				db.PHOTOTABLE.write(pr);
+				CommunityRecord cr = db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
+				if(my) {
+					changeRef(cr.myPhotoHash, -1);
+					cr.myPhotoHash = pr.hash;
+				} else {
+					changeRef(cr.chosenPhotoHash, -1);
+					cr.chosenPhotoHash = pr.hash;
+				}
+				cr.generation++;
+				db.COMMUNITYTABLE.write(cr);
+				discard();
+			}
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			discard();
 		}
 	}
 	
@@ -310,8 +336,8 @@ public class SnetController extends RPCCallable {
 			for(CommunityRecord cr : all)
 				fetchUpdates(cr.name, true);
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			discard();
 		}
 	}
 	

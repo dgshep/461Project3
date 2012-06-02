@@ -1,6 +1,7 @@
 package edu.uw.cs.cse461.sp12.OSConsoleApps;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.InputStreamReader;
 
 import org.json.JSONArray;
@@ -33,16 +34,25 @@ public class Snet implements OSConsoleApp {
 			System.out.println("This is console Snet at your service!");
 			while ( true ) {
 				try {
+					System.out.print("Please enter a base photo directory(relative): ");
+					String dir = console.readLine();
+					snet.setPhotoDirectory(new File(dir.toLowerCase()));
 					System.out.print("Enter a command or exit to quit: ");
 					String command = console.readLine();
 					if	(command.toLowerCase().equals("exit")) break;
 					if (command.toLowerCase().equals("fetchupdates")){
-						System.out.print("Enter a name to fetchupdates from ");
+						System.out.print("Enter all to fetch updates from all users or a specific name: ");
 						command = console.readLine();
-						snet.fetchUpdates(command, false);
-						System.out.println(snet.toString());
+						if(command.toLowerCase().equals("all"))
+							snet.allUpdates();
+						else
+							snet.fetchUpdates(command, false);
+						System.out.println(snet.community());
 						continue;
-
+					}
+					if (command.toLowerCase().equals("community")) {
+						System.out.println(snet.community());
+						continue;
 					}
 					//System.out.println(targetIP + " " + targetPort + " " + msg);
 					//RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
