@@ -49,7 +49,14 @@ public class SnetController extends RPCCallable {
 		photoDir = null;
 		db.discard(); //The db must be closed so that other threads may access it. Only one thread can access at a time;
 	}
-		
+	
+	/**
+	 * THIS NEEDS TO BE CALLED BEFORE ANY PHOTOS CAN BE FETCHED OR SHARED
+	 * @param location
+	 */
+	public void setPhotoDirectory(File location) {
+		photoDir = location;
+	}
 	
 	private void storeInfo(CommunityRecord cr, String name, int myHash, int chosenHash, int generation) throws DB461Exception {
 		cr = db.COMMUNITYTABLE.createRecord();
@@ -336,10 +343,6 @@ public class SnetController extends RPCCallable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-	}
-
-	public void setPhotoDirectory(File location) {
-		photoDir = location;
 	}
 	
 //	public List<String> getOnlineUsers() {
