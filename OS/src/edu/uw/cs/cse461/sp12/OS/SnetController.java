@@ -13,6 +13,7 @@ import org.json.JSONObject;
 import edu.uw.cs.cse461.sp12.DB461.DB461.DB461Exception;
 import edu.uw.cs.cse461.sp12.OS.SNetDB461.CommunityRecord;
 import edu.uw.cs.cse461.sp12.OS.SNetDB461.PhotoRecord;
+import edu.uw.cs.cse461.sp12.util.Base64;
 
 
 
@@ -20,14 +21,30 @@ public class SnetController extends RPCCallable {
 	
 	//TODO friends
 	private SNetDB461 db;
+	private File photoDir;
+	private int generation;
 	
 	public SnetController() {
 		try {
 			db = new SNetDB461();
+			//Check to see if this is the first time turning on
+			if(db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name")) == null) {
+				storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("host.name"), Integer.MIN_VALUE, 0, 0);
+				storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("ddns.rootserver"), Integer.MIN_VALUE, 0, 0);
+			}
+			photoDir = null;
 		} catch (DB461Exception e) {
 			e.printStackTrace();
 		}
 	}
+	
+	private void storeInfo(CommunityRecord cr, String name, int myHash, int chosenHash, int generation) throws DB461Exception {
+		cr = db.COMMUNITYTABLE.createRecord();
+		cr.generation = 0;
+		cr.name = OS.config().getProperty("host.name");
+		db.COMMUNITYTABLE.write(cr);
+	}
+	
 	@Override
 	public String servicename() {
 		return "snet";
@@ -61,6 +78,7 @@ public class SnetController extends RPCCallable {
 				String key = it.next();
 				JSONObject memberUpdate = commUpdates.getJSONObject(key);
 				CommunityRecord cr = db.COMMUNITYTABLE.readOne(key);
+				//TODO correct
 				if(cr.generation < memberUpdate.getInt("generation")) {
 					changeRef(cr.myPhotoHash, -1);
 					changeRef(cr.chosenPhotoHash, -1);
@@ -110,6 +128,11 @@ public class SnetController extends RPCCallable {
 		}
 	}
 	
+	public boolean addFriend(String name) {
+		//TODO write this
+		return false;
+	}
+	
 	public List<File> getUnusedPhotos(){
 		try{
 			List<File> result = new LinkedList<File>();
@@ -127,12 +150,19 @@ public class SnetController extends RPCCallable {
 		return null;
 	}
 	
-	public byte[] fetchPhoto(String name, int photoHash) {
+	public void fetchPhoto(String name, int photoHash) {
+		if(photoDir == null)
+			throw new IllegalStateException("Set Photo Directory First!");
+		
 		DDNSRRecord rr;
 		try {
 			rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
 			RPCCallerSocket sock = new RPCCallerSocket(rr.host, rr.host, rr.port);
 			JSONObject request = new JSONObject();
+			request.put("photohash", photoHash);
+			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
+			byte[] bitmap = Base64.decode(response.getString("photodata"));
+			
 		} catch (DDNSException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -143,20 +173,12 @@ public class SnetController extends RPCCallable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		return null;
-	}
-	
-	public void setPhotoLocation(int hash, File location) {
-		try {
-			PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
-			pr.file = location;
-			db.PHOTOTABLE.write(pr);
-		} catch (DB461Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
 	}
 
+	public void setPhotoDirectory(File location) {
+		photoDir = location;
+	}
+	
 //	public List<String> getOnlineUsers() {
 //		List<String> names = new LinkedList<String>();
 //		
