@@ -89,6 +89,7 @@ public class SnetController extends RPCCallable {
 					} else if(mR.generation < oR.generation){
 						//oR.isFriend = mR.isFriend;
 						//db.COMMUNITYTABLE.write(oR); //Updates own table with more up to date data;
+						//TODO: Manage ref counts in the photo table
 					}
 				}
 			}
