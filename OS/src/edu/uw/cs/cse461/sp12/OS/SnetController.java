@@ -39,14 +39,15 @@ public class SnetController extends RPCCallable {
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchPhoto", fetchPhoto);
 		db = new SNetDB461();
 		if(!db.dbExists()) db.openOrCreateDatabase();
-		if(db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name")) == null) {
+		CommunityRecord host = db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
+		fetchUpdates(".");
+		if(host == null) {
 			storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("host.name"), Integer.MIN_VALUE, 0, 0);
 			storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("ddns.rootserver"), Integer.MIN_VALUE, 0, 0);
-			fetchUpdates(OS.config().getProperty("ddns.rootserver"));
 		}
 		
 		photoDir = null;
-		//db.discard();
+		db.discard(); //The db must be closed so that other threads may access it. Only one thread can access at a time;
 	}
 		
 	
