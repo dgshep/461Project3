@@ -2,6 +2,7 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import java.util.Iterator;
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
 import java.util.LinkedList;
@@ -38,7 +39,7 @@ public class SnetController extends RPCCallable {
 		fetchPhoto = new RPCCallableMethod<SnetController>(this, "_fetchPhoto");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchPhoto", fetchPhoto);
 		db = new SNetDB461();
-		fetchUpdates(".");
+		fetchUpdates(".", false);
 		db.openOrCreateDatabase();
 		CommunityRecord host = db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
 		if(host == null) {
@@ -194,7 +195,7 @@ public class SnetController extends RPCCallable {
 	 * @param name
 	 * @return
 	 */
-	public JSONArray fetchUpdates(String name) {		
+	public void fetchUpdates(String name, boolean fetchPhotos) {		
 		try {
 			DDNSRRecord rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
 			RPCCallerSocket sock = new RPCCallerSocket(rr.name, rr.host, rr.port);
@@ -231,11 +232,15 @@ public class SnetController extends RPCCallable {
 				}
 			}
 			discard();
-			return response.getJSONArray("photoupdates");
+			if(fetchPhotos) {
+				JSONArray updates = response.getJSONArray("photoupdates");
+				for(int i = 0; i < updates.length(); i++) {
+					fetchPhoto(name, updates.getInt(i));
+				}
+			}
 		} catch (Exception e) {
 			e.printStackTrace();
 			discard();
-			return null;
 		}
 	}
 	
@@ -251,8 +256,15 @@ public class SnetController extends RPCCallable {
 			request.put("photohash", photoHash);
 			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
 			byte[] bitmap = Base64.decode(response.getString("photodata"));
+			File destination = new File(photoDir, Integer.toString(photoHash));
+			FileOutputStream out = new FileOutputStream(destination);
+			out.write(bitmap);
+			bitmap = null;
+			out = null;
 			db.openOrCreateDatabase();
-			//TODO write the rest
+			PhotoRecord pr = db.PHOTOTABLE.readOne(photoHash);
+			pr.file = destination;
+			db.PHOTOTABLE.write(pr);
 			discard();
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -261,7 +273,14 @@ public class SnetController extends RPCCallable {
 	}
 	
 	public boolean addFriend(String name) {
-		//TODO write this
+		try {
+			db.openOrCreateDatabase();
+			
+			discard();
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 		return false;
 	}
 	
@@ -273,11 +292,46 @@ public class SnetController extends RPCCallable {
 	public void newUserPhoto(File location, boolean my) {
 		//TODO write this
 		try {
-			Base64.encodeFromFile(location.toString());
+			location.toString();
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
+	}
+	
+	public void allUpdates() {
+		try {
+			db.openOrCreateDatabase();
+			RecordSet<CommunityRecord> all =  db.COMMUNITYTABLE.readAll();
+			discard();
+			for(CommunityRecord cr : all){
+				fetchUpdates(cr.name, false);
+			}
+			for(CommunityRecord cr : all)
+				fetchUpdates(cr.name, true);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	
+	public String community() {
+		String result = "";
+		try {
+			db.openOrCreateDatabase();
+			RecordSet<CommunityRecord> all =  db.COMMUNITYTABLE.readAll();
+			discard();
+			for(CommunityRecord cr : all){
+				result += cr.name + " [";
+				if(cr.isFriend)
+					result += "friend]\n";
+				else
+					result += "not friend]\n";
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return result;
 	}
 	
 	private JSONObject communityToJSON() throws DB461Exception, JSONException {
