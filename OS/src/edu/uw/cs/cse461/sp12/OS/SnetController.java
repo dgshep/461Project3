@@ -38,16 +38,15 @@ public class SnetController extends RPCCallable {
 		fetchPhoto = new RPCCallableMethod<SnetController>(this, "_fetchPhoto");
 		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchPhoto", fetchPhoto);
 		db = new SNetDB461();
-		if(!db.dbExists()) db.openOrCreateDatabase();
-		CommunityRecord host = db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
 		fetchUpdates(".");
+		db.openOrCreateDatabase();
+		CommunityRecord host = db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
 		if(host == null) {
 			storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("host.name"), Integer.MIN_VALUE, 0, 0);
 			storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("ddns.rootserver"), Integer.MIN_VALUE, 0, 0);
 		}
-		
-		photoDir = null;
 		db.discard(); //The db must be closed so that other threads may access it. Only one thread can access at a time;
+		photoDir = null;
 	}
 	
 	/**
@@ -86,7 +85,6 @@ public class SnetController extends RPCCallable {
 	}
 	public JSONObject _fetchUpdates(JSONObject args){
 		try {
-			db = new SNetDB461();
 			db.openOrCreateDatabase();
 			JSONObject community;
 			JSONArray needPhotos;
@@ -196,7 +194,7 @@ public class SnetController extends RPCCallable {
 	 * @param name
 	 * @return
 	 */
-	public JSONArray fetchUpdates(String name) {
+	public JSONArray fetchUpdates(String name) throws Exception {
 		//TODO Make neededphotos
 		
 		try {
@@ -212,15 +210,23 @@ public class SnetController extends RPCCallable {
 				String key = it.next();
 				JSONObject memberUpdate = commUpdates.getJSONObject(key);
 				CommunityRecord cr = db.COMMUNITYTABLE.readOne(key);
-				if(cr == null) cr = db.createCommunityRecord();
-				if(cr.generation < memberUpdate.getInt("generation")) {
+				if(cr == null){
+					cr = db.createCommunityRecord();
+					int myHash = memberUpdate.getInt("myphotohash");
+					int chosenHash = memberUpdate.getInt("chosenphotohash");
+					cr.name = key;
+					cr.generation = memberUpdate.getInt("generation");
+					cr.myPhotoHash = myHash;
+					cr.chosenPhotoHash = chosenHash;
+					db.COMMUNITYTABLE.write(cr);
+				} else if(cr.generation < memberUpdate.getInt("generation")) {
 					changeRef(cr.myPhotoHash, -1);
 					changeRef(cr.chosenPhotoHash, -1);
 					int myHash = memberUpdate.getInt("myphotohash");
 					int chosenHash = memberUpdate.getInt("chosenphotohash");
 					cr.generation = memberUpdate.getInt("generation");
 					cr.myPhotoHash = myHash;
-					cr.myPhotoHash = chosenHash;
+					cr.chosenPhotoHash = chosenHash;
 					newPhoto(myHash);
 					newPhoto(chosenHash);
 					db.COMMUNITYTABLE.write(cr);
@@ -228,24 +234,12 @@ public class SnetController extends RPCCallable {
 			}
 			
 			return response.getJSONArray("photoupdates");
-		} catch (DDNSException e) {
-			// TODO failed ddns for whatever reason
-			e.printStackTrace();
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (JSONException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch (DB461Exception e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		} catch(Exception e){
-			e.printStackTrace();
 		} finally {
-			db.discard();
+			if ( db != null ) {
+				db.discard();
+			}
 		}
-		return null;
+		//return null;
 	}
 	
 	private JSONObject communityToJSON() throws DB461Exception, JSONException {
@@ -265,7 +259,9 @@ public class SnetController extends RPCCallable {
 			e.printStackTrace();
 			return null;
 		} finally {
-			db.discard();
+			if ( db != null ) {
+				db.discard();
+			}
 		}
 	}
 	
