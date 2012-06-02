@@ -194,9 +194,7 @@ public class SnetController extends RPCCallable {
 	 * @param name
 	 * @return
 	 */
-	public JSONArray fetchUpdates(String name) throws Exception {
-		//TODO Make neededphotos
-		
+	public JSONArray fetchUpdates(String name) {		
 		try {
 			DDNSRRecord rr = ((DDNSResolverService)OS.getService("ddnsresolver")).resolve(name);
 			RPCCallerSocket sock = new RPCCallerSocket(rr.name, rr.host, rr.port);
@@ -232,14 +230,13 @@ public class SnetController extends RPCCallable {
 					db.COMMUNITYTABLE.write(cr);
 				}
 			}
-			
+			discard();
 			return response.getJSONArray("photoupdates");
-		} finally {
-			if ( db != null ) {
-				db.discard();
-			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			discard();
+			return null;
 		}
-		//return null;
 	}
 	
 	private JSONObject communityToJSON() throws DB461Exception, JSONException {
@@ -253,19 +250,23 @@ public class SnetController extends RPCCallable {
 				member.put("chosenphotohash", cr.chosenPhotoHash);
 				result.put(cr.name, member);
 			}
+			discard();
 			return result;
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
+			discard();
 			return null;
-		} finally {
-			if ( db != null ) {
-				db.discard();
-			}
+		}
+	}
+	
+	private void discard() {
+		if ( db != null ) {
+			db.discard();
 		}
 	}
 	
 	private JSONArray neededPhotos() {
+		//TODO
 		JSONArray result = new JSONArray();
 		
 		return result;
@@ -299,8 +300,9 @@ public class SnetController extends RPCCallable {
 		return false;
 	}
 	
-	public List<File> getUnusedPhotos(){
+	private List<File> getUnusedPhotos(){
 		try{
+			db.openOrCreateDatabase();
 			List<File> result = new LinkedList<File>();
 			for(PhotoRecord pr : db.PHOTOTABLE.readAll()) {
 				if(pr.refCount == 0) {
@@ -312,6 +314,11 @@ public class SnetController extends RPCCallable {
 		} catch (DB461Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			discard();
 		}
 		return null;
 	}
@@ -328,7 +335,7 @@ public class SnetController extends RPCCallable {
 			request.put("photohash", photoHash);
 			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
 			byte[] bitmap = Base64.decode(response.getString("photodata"));
-			
+			//TODO write the rest
 		} catch (DDNSException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
