@@ -42,9 +42,11 @@ public class SnetController extends RPCCallable {
 		if(db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name")) == null) {
 			storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("host.name"), Integer.MIN_VALUE, 0, 0);
 			storeInfo(db.COMMUNITYTABLE.createRecord(), OS.config().getProperty("ddns.rootserver"), Integer.MIN_VALUE, 0, 0);
+			fetchUpdates(OS.config().getProperty("ddns.rootserver"));
 		}
+		
 		photoDir = null;
-		db.discard();
+		//db.discard();
 	}
 		
 	
