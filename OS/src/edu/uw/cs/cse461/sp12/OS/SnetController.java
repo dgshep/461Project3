@@ -36,9 +36,9 @@ public class SNetController extends RPCCallable {
 	
 	public SNetController() throws Exception {
 		fetchUpdates = new RPCCallableMethod<SNetController>(this, "_fetchUpdates");
-		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchUpdates", fetchUpdates);
+		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchupdates", fetchUpdates);
 		fetchPhoto = new RPCCallableMethod<SNetController>(this, "_fetchPhoto");
-		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "unregister", fetchPhoto);
+		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchphoto", fetchPhoto);
 		db = new SNetDB461();
 		if(!db.dbExists()) db.openOrCreateDatabase();
 		if(db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name")) == null) {
