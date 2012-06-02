@@ -34,9 +34,9 @@ public class SnetController extends RPCCallable {
 	
 	public SnetController() throws Exception {
 		fetchUpdates = new RPCCallableMethod<SnetController>(this, "_fetchUpdates");
-		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchupdates", fetchUpdates);
+		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchUpdates", fetchUpdates);
 		fetchPhoto = new RPCCallableMethod<SnetController>(this, "_fetchPhoto");
-		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchphoto", fetchPhoto);
+		((RPCService)OS.getService("rpc")).registerHandler(servicename(), "fetchPhoto", fetchPhoto);
 		db = new SNetDB461();
 		if(!db.dbExists()) db.openOrCreateDatabase();
 		if(db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name")) == null) {
@@ -52,7 +52,16 @@ public class SnetController extends RPCCallable {
 		cr = db.COMMUNITYTABLE.createRecord();
 		cr.generation = 0;
 		cr.name = OS.config().getProperty("host.name");
-		db.COMMUNITYTABLE.write(cr);
+		try {
+			db.openOrCreateDatabase();
+			db.COMMUNITYTABLE.write(cr);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			db.discard();
+		}
+		
 	}
 	
 	@Override
@@ -68,9 +77,10 @@ public class SnetController extends RPCCallable {
 	public JSONObject _fetchUpdates(JSONObject args){
 		try {
 			db = new SNetDB461();
+			db.openOrCreateDatabase();
 			JSONObject community;
 			JSONArray needPhotos;
-			needPhotos = args.getJSONArray("needPhotos");
+			needPhotos = args.getJSONArray("needphotos");
 			community = args.getJSONObject("community");
 			JSONObject out = new JSONObject();
 			RecordSet<CommunityRecord> oRecVec;
@@ -105,6 +115,8 @@ public class SnetController extends RPCCallable {
 			e1.printStackTrace();
 		} catch (JSONException je) {
 			je.printStackTrace();
+		} catch(Exception e){
+			e.printStackTrace();
 		} finally {
 			   if ( db != null ) db.discard();
 		}
@@ -185,12 +197,12 @@ public class SnetController extends RPCCallable {
 			request.put("needphotos", neededPhotos());
 			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
 			JSONObject commUpdates = response.getJSONObject("communityupdates");
-			
+			db.openOrCreateDatabase();
 			for(Iterator<String> it = commUpdates.keys(); it.hasNext();) {
 				String key = it.next();
 				JSONObject memberUpdate = commUpdates.getJSONObject(key);
 				CommunityRecord cr = db.COMMUNITYTABLE.readOne(key);
-				//TODO correct
+				if(cr == null) cr = db.createCommunityRecord();
 				if(cr.generation < memberUpdate.getInt("generation")) {
 					changeRef(cr.myPhotoHash, -1);
 					changeRef(cr.chosenPhotoHash, -1);
@@ -218,20 +230,33 @@ public class SnetController extends RPCCallable {
 		} catch (DB461Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
+		} catch(Exception e){
+			e.printStackTrace();
+		} finally {
+			db.discard();
 		}
 		return null;
 	}
 	
 	private JSONObject communityToJSON() throws DB461Exception, JSONException {
 		JSONObject result = new JSONObject();
-		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
-			JSONObject member = new JSONObject();
-			member.put("generation", cr.generation);
-			member.put("myphotohash", cr.myPhotoHash);
-			member.put("chosenphotohash", cr.chosenPhotoHash);
-			result.put(cr.name, member);
+		try {
+			db.openOrCreateDatabase();
+			for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
+				JSONObject member = new JSONObject();
+				member.put("generation", cr.generation);
+				member.put("myphotohash", cr.myPhotoHash);
+				member.put("chosenphotohash", cr.chosenPhotoHash);
+				result.put(cr.name, member);
+			}
+			return result;
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return null;
+		} finally {
+			db.discard();
 		}
-		return result;
 	}
 	
 	private JSONArray neededPhotos() {
