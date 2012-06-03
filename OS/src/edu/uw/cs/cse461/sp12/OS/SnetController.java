@@ -377,7 +377,7 @@ public class SnetController extends RPCCallable {
 	private JSONArray neededPhotos() throws DB461Exception {
 		JSONArray result = new JSONArray();
 		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
-			if (true) {//(cr.isFriend) {
+			if (cr.isFriend) {//(cr.isFriend) {
 				PhotoRecord my = db.PHOTOTABLE.readOne(cr.myPhotoHash);
 				PhotoRecord chosen = db.PHOTOTABLE.readOne(cr.chosenPhotoHash);
 				if (my != null && my.file == null)

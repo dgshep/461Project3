@@ -103,7 +103,7 @@ public class MainSnetActivity extends Activity {
 		config.put("ddns.resolvesteps","10");
 		config.put("ddns.namespace", "hallshep.cse461.");
 		config.put("hallshep.cse461.", "SOA");
-		config.put("ddns.edgesteps", 10);
+		config.put("ddns.edgesteps", "10");
 		
 		// boot the OS and load RPC services
 		ContextManager.setContext(getApplicationContext());
