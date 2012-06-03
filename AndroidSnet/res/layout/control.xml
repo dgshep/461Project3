@@ -1,0 +1,65 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent" >
+
+    <Button
+        android:id="@+id/contact"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
+        android:text="Contact" />
+
+    <Button
+        android:id="@+id/unfriend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignBottom="@+id/contact"
+        android:layout_alignParentRight="true"
+        android:text="Unfriend" />
+
+    <Spinner
+        android:id="@+id/members"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/contact"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="75dp" />
+
+    <Button
+        android:id="@+id/fix"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="31dp"
+        android:text="Fix DB" />
+
+    <Button
+        android:id="@+id/updateAll"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/contact"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="40dp"
+        android:text="Update All" />
+
+    <Button
+        android:id="@+id/friend"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/updateAll"
+        android:layout_alignParentLeft="true"
+        android:text="Befriend" />
+
+    <TextView
+        android:id="@+id/console"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_alignParentLeft="true"
+        android:layout_alignParentRight="true"
+        android:layout_alignParentTop="true"
+        android:text=" " />
+
+</RelativeLayout>
