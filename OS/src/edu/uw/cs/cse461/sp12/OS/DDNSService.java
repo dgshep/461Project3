@@ -340,7 +340,6 @@ public class DDNSService extends RPCCallable implements HTTPProvider {
 		}
 		return out.toString();
 	}
-	@Override
 	public String httpServe(String[] uriArray) {
 		return toString();//TODO: make prettier
 	}

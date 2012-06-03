@@ -70,7 +70,7 @@ public class SnetController extends RPCCallable {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		} finally {
-			db.discard();
+			discard();
 		}
 		
 	}
@@ -79,11 +79,11 @@ public class SnetController extends RPCCallable {
 	public String servicename() {
 		return "snet";
 	}
+	
 
 	@Override
 	public void shutdown() {
-		// TODO Auto-generated method stub
-		
+		discard();
 	}
 	public JSONObject _fetchUpdates(JSONObject args){
 		try {
@@ -411,11 +411,14 @@ public class SnetController extends RPCCallable {
 	private void setPhoto(Photo p, CommunityRecord r){
 		try {
 			r.generation = r.generation + 1;
+			db.openOrCreateDatabase();
 			newPhoto(p.hash(), p.file());
 			db.COMMUNITYTABLE.write(r);
 		} catch (Exception e) {
 			e.printStackTrace();
-	}
+		} finally {
+			db.discard();
+		}
 	}
 	private CommunityRecord getMe(){
 		try{
@@ -440,7 +443,7 @@ public class SnetController extends RPCCallable {
 	}
 	private void newPhoto(int hash, File f) {
 		try {
-			db.openOrCreateDatabase();
+			//db.openOrCreateDatabase();
 			PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
 			if(pr == null) {
 				pr = db.PHOTOTABLE.createRecord();

@@ -210,7 +210,6 @@ public class DDNSResolverService extends RPCCallable {
 			this.update = false;
 			
 		}
-		@Override
 		public void run() {
 			int ttl = 10;
 			boolean registered = false;

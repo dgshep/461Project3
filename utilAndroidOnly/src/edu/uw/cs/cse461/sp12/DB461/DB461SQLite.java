@@ -54,7 +54,7 @@ public class DB461SQLite extends DB461 {
 		
 		public DBOpenHelper(String dbName) {
 			//super(ContextManager.getContext(), dbName, null, DBVERSION);
-			super(null, dbName, null, DBVERSION); //FUCK OFF
+			super(ContextManager.getContext(), dbName, null, DBVERSION); 
 		}
 		
 		@Override

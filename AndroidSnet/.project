@@ -30,4 +30,21 @@
 		<nature>com.android.ide.eclipse.adt.AndroidNature</nature>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>OSsrc</name>
+			<type>2</type>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/OS/src</location>
+		</link>
+		<link>
+			<name>mainUtilsrc</name>
+			<type>2</type>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/util/src</location>
+		</link>
+		<link>
+			<name>utilsrc</name>
+			<type>2</type>
+			<location>/Users/Davis/Dropbox/Spring12/CSE461/461AllProjects/461Project3/utilAndroidOnly/src</location>
+		</link>
+	</linkedResources>
 </projectDescription>
