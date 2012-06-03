@@ -12,7 +12,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import android.util.Log;
 
 import edu.uw.cs.cse461.sp12.DB461.DB461.DB461Exception;
 import edu.uw.cs.cse461.sp12.DB461.DB461.Record;
@@ -22,6 +21,7 @@ import edu.uw.cs.cse461.sp12.OS.SNetDB461.CommunityRecord;
 import edu.uw.cs.cse461.sp12.OS.SNetDB461.Photo;
 import edu.uw.cs.cse461.sp12.OS.SNetDB461.PhotoRecord;
 import edu.uw.cs.cse461.sp12.util.Base64;
+import edu.uw.cs.cse461.sp12.util.Log;
 
 
 public class SnetController extends RPCCallable {
@@ -242,8 +242,10 @@ public class SnetController extends RPCCallable {
 					fetchPhoto(name, updates.getInt(i));
 				}
 			}
+		} catch (DDNSException dde) {
+			Log.i("FetchUpdates","The user " + name + " is not online.");
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.i("FetchUpdtes", e.getMessage());
 			discard();
 		}
 	}
@@ -336,7 +338,7 @@ public class SnetController extends RPCCallable {
 			for(CommunityRecord cr : all)
 				fetchUpdates(cr.name, true);
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.i("GetAllUpdates", e.getMessage());
 			discard();
 		}
 	}
@@ -375,9 +377,11 @@ public class SnetController extends RPCCallable {
 	private JSONArray neededPhotos() throws DB461Exception {
 		JSONArray result = new JSONArray();
 		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
-			if(db.PHOTOTABLE.readOne(cr.myPhotoHash).file == null)
+			PhotoRecord my = db.PHOTOTABLE.readOne(cr.myPhotoHash);
+			PhotoRecord chosen = db.PHOTOTABLE.readOne(cr.chosenPhotoHash);
+			if(my != null && my.file == null)
 				result.put(cr.myPhotoHash);
-			if(db.PHOTOTABLE.readOne(cr.chosenPhotoHash).file == null)
+			if(chosen != null && chosen.file == null)
 				result.put(cr.chosenPhotoHash);
 		}
 		return result;
@@ -391,8 +395,10 @@ public class SnetController extends RPCCallable {
 	
 	private void changeRef(int hash, int dif) throws DB461Exception {
 		PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
-		pr.refCount += dif;
-		db.PHOTOTABLE.write(pr);
+		if(pr != null) {
+			pr.refCount += dif;
+			db.PHOTOTABLE.write(pr);
+		}
 	}
 	
 	private void newPhoto(int hash) throws DB461Exception {

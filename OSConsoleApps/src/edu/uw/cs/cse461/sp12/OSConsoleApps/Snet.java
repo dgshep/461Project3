@@ -2,6 +2,7 @@ package edu.uw.cs.cse461.sp12.OSConsoleApps;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FilenameFilter;
 import java.io.InputStreamReader;
 
 import org.json.JSONArray;
@@ -36,7 +37,10 @@ public class Snet implements OSConsoleApp {
 				try {
 					System.out.print("Please enter a base photo directory(relative): ");
 					String dir = console.readLine();
-					snet.setPhotoDirectory(new File(dir.toLowerCase()));
+					File photos = new File(dir.toLowerCase());
+					snet.setPhotoDirectory(photos);
+					System.out.println("Photos found:");
+					for(String s : photos.list(new OnlyExt("jpg"))) System.out.println(s);
 					System.out.print("Enter a command or exit to quit: ");
 					String command = console.readLine();
 					if	(command.toLowerCase().equals("exit")) break;
@@ -54,11 +58,6 @@ public class Snet implements OSConsoleApp {
 						System.out.println(snet.community());
 						continue;
 					}
-					//System.out.println(targetIP + " " + targetPort + " " + msg);
-					//RPCCallerSocket socket = new RPCCallerSocket(targetIP, targetIP, targetPort);
-					//JSONObject response = socket.invoke("echo", "echo", new JSONObject().put("msg", msg) );
-					//socket.close();
-					//System.out.println(response.getString("msg"));
 					
 				} catch (Exception e) {
 					System.out.println("Exception: " + e.getMessage());
@@ -73,6 +72,15 @@ public class Snet implements OSConsoleApp {
 	public void shutdown() throws Exception {
 		// TODO Auto-generated method stub
 		
+	}
+	public class OnlyExt implements FilenameFilter { 
+		String ext; 
+		public OnlyExt(String ext) { 
+			this.ext = "." + ext; 
+		} 
+		public boolean accept(File dir, String name) { 
+			return name.endsWith(ext); 
+		} 
 	}
 
 }
