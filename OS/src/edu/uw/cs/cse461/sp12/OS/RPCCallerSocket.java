@@ -1,7 +1,9 @@
 package edu.uw.cs.cse461.sp12.OS;
 
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketAddress;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -37,11 +39,13 @@ public class RPCCallerSocket extends Socket {
 	}
 	
 	public RPCCallerSocket(String hostname, String ip, int port) throws IOException, JSONException {
-		super(ip, port);
-		mRemoteHost = hostname;
+		super();
 		String time = OS.config().getProperty("rpc.timeout");
 		int rpcTimeout = Integer.parseInt(time);  
 		this.setSoTimeout(rpcTimeout);
+		this.connect(new InetSocketAddress(ip, port), 2*rpcTimeout);
+		mRemoteHost = hostname;
+		
 		expired = false;
 		tcpHandler = null;
 		tcpHandler = new TCPMessageHandler(this);

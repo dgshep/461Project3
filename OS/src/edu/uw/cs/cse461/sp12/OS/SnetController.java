@@ -2,6 +2,7 @@ package edu.uw.cs.cse461.sp12.OS;
 
 import java.util.Iterator;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.util.Iterator;
@@ -115,7 +116,7 @@ public class SnetController extends RPCCallable {
 			JSONArray photoUpdates = new JSONArray();
 			for(int i = 0; i < needPhotos.length(); i++){
 				PhotoRecord pr = db.PHOTOTABLE.readOne(needPhotos.getInt(i));
-				if(pr != null) photoUpdates.put(pr.hash);
+				if(pr != null && pr.file != null) photoUpdates.put(pr.hash);
 			}
 			out.put("communityupdates", communityUpdates);
 			out.put("photoupdates", photoUpdates);
@@ -133,33 +134,38 @@ public class SnetController extends RPCCallable {
 
 	}
 	public JSONObject _fetchPhoto(JSONObject args){
+		JSONObject out = new JSONObject();
 		try {
 			db.openOrCreateDatabase();
 			int photoHash = args.getInt("photohash");
 			PhotoRecord pr = db.PHOTOTABLE.readOne(args.getInt("photohash"));
-			if(pr != null){
-				JSONObject out = new JSONObject();
+			if(pr != null && pr.file != null){
 				out.put("photohash", photoHash);
-				out.put("photodata", Base64.encodeFromFile(pr.file.getAbsolutePath()));
+				try{
+					out.put("photodata", Base64.encodeFromFile(pr.file.getCanonicalPath()));
+				} catch(FileNotFoundException e){
+					out.put("photodata", "");
+					return out;
+				}
 				return out;
 			} else {
 				//TODO: Return Exception
-				return null;
+				return out;
 			}
 		} catch (JSONException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return null;
+			return out;
 
 		} catch (DB461Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return null;
+			return out;
 
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
-			return null;
+			return out;
 
 		} finally {
 			discard();
@@ -219,8 +225,8 @@ public class SnetController extends RPCCallable {
 					cr.generation = memberUpdate.getInt("generation");
 					cr.myPhotoHash = myHash;
 					cr.chosenPhotoHash = chosenHash;
-					newPhoto(myHash);
-					newPhoto(chosenHash);
+					newPhoto(myHash, null);
+					newPhoto(chosenHash, null);
 					db.COMMUNITYTABLE.write(cr);
 				} else if(cr.generation < memberUpdate.getInt("generation")) {
 					changeRef(cr.myPhotoHash, -1);
@@ -230,8 +236,8 @@ public class SnetController extends RPCCallable {
 					cr.generation = memberUpdate.getInt("generation");
 					cr.myPhotoHash = myHash;
 					cr.chosenPhotoHash = chosenHash;
-					newPhoto(myHash);
-					newPhoto(chosenHash);
+					newPhoto(myHash, null);
+					newPhoto(chosenHash, null);
 					db.COMMUNITYTABLE.write(cr);
 				}
 			}
@@ -246,12 +252,13 @@ public class SnetController extends RPCCallable {
 			Log.i("FetchUpdates","The user " + name + " is not online.");
 		} catch (Exception e) {
 			Log.i("FetchUpdtes", e.getMessage());
+		} finally {
 			discard();
 		}
 	}
 	
 	public void fetchPhoto(String name, int photoHash) throws IllegalStateException {
-		if(photoDir != null)
+		if(photoDir == null)
 			throw new IllegalStateException("Set Photo Directory First!");
 		
 		DDNSRRecord rr;
@@ -260,7 +267,7 @@ public class SnetController extends RPCCallable {
 			RPCCallerSocket sock = new RPCCallerSocket(rr.host, rr.host, rr.port);
 			JSONObject request = new JSONObject();
 			request.put("photohash", photoHash);
-			JSONObject response = sock.invoke("snet", "fetchUpdates", request);
+			JSONObject response = sock.invoke("snet", "fetchPhoto", request);
 			byte[] bitmap = Base64.decode(response.getString("photodata"));
 			File destination = new File(photoDir, Integer.toString(photoHash));
 			FileOutputStream out = new FileOutputStream(destination);
@@ -271,9 +278,9 @@ public class SnetController extends RPCCallable {
 			PhotoRecord pr = db.PHOTOTABLE.readOne(photoHash);
 			pr.file = destination;
 			db.PHOTOTABLE.write(pr);
-			discard();
 		} catch (Exception e) {
-			e.printStackTrace();
+			Log.i("FetchPhoto", e.getMessage());
+		} finally {
 			discard();
 		}
 	}
@@ -297,35 +304,6 @@ public class SnetController extends RPCCallable {
 		return false;
 	}
 	
-	public void newUserPhoto(File location, boolean my) {
-		if(photoDir == null)
-			throw new IllegalStateException();
-		
-		try {
-			if(location.getParentFile() == photoDir) {
-				db.openOrCreateDatabase();
-				PhotoRecord pr = db.PHOTOTABLE.createRecord();
-				pr.file = location;
-				pr.hash = new Photo(location).hash();
-				pr.refCount = 1;
-				db.PHOTOTABLE.write(pr);
-				CommunityRecord cr = db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
-				if(my) {
-					changeRef(cr.myPhotoHash, -1);
-					cr.myPhotoHash = pr.hash;
-				} else {
-					changeRef(cr.chosenPhotoHash, -1);
-					cr.chosenPhotoHash = pr.hash;
-				}
-				cr.generation++;
-				db.COMMUNITYTABLE.write(cr);
-				discard();
-			}
-		} catch (Exception e) {
-			e.printStackTrace();
-			discard();
-		}
-	}
 	
 	public void allUpdates() {
 		try {
@@ -377,12 +355,14 @@ public class SnetController extends RPCCallable {
 	private JSONArray neededPhotos() throws DB461Exception {
 		JSONArray result = new JSONArray();
 		for(CommunityRecord cr : db.COMMUNITYTABLE.readAll()) {
-			PhotoRecord my = db.PHOTOTABLE.readOne(cr.myPhotoHash);
-			PhotoRecord chosen = db.PHOTOTABLE.readOne(cr.chosenPhotoHash);
-			if(my != null && my.file == null)
-				result.put(cr.myPhotoHash);
-			if(chosen != null && chosen.file == null)
-				result.put(cr.chosenPhotoHash);
+			if (cr.isFriend) {//(cr.isFriend) {
+				PhotoRecord my = db.PHOTOTABLE.readOne(cr.myPhotoHash);
+				PhotoRecord chosen = db.PHOTOTABLE.readOne(cr.chosenPhotoHash);
+				if (my != null && my.file == null)
+					result.put(cr.myPhotoHash);
+				if (chosen != null && chosen.file == null)
+					result.put(cr.chosenPhotoHash);
+			}
 		}
 		return result;
 	}
@@ -397,24 +377,111 @@ public class SnetController extends RPCCallable {
 		PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
 		if(pr != null) {
 			pr.refCount += dif;
-			db.PHOTOTABLE.write(pr);
+			if(pr.refCount == 0) {
+				if(pr.file != null) pr.file.delete();
+				db.PHOTOTABLE.delete(pr.hash);
+			}
+			else db.PHOTOTABLE.write(pr);
 		}
 	}
-	
-	private void newPhoto(int hash) throws DB461Exception {
-		PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
-		if(pr == null) {
-			pr = db.PHOTOTABLE.createRecord();
-			pr.hash = hash;
-			pr.refCount = 1;
-			pr.file = null;
-		} else {
-			changeRef(hash, 1);
+	public void setChosenPhoto(Photo p) {
+		try {
+			CommunityRecord me = getMe();
+			db.openOrCreateDatabase();
+			changeRef(me.chosenPhotoHash, -1);
+			discard();
+			me.chosenPhotoHash = p.hash();
+			setPhoto(p, me);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	public void setMyPhoto(Photo p) {
+		try {
+			CommunityRecord me = getMe();
+			db.openOrCreateDatabase();
+			changeRef(me.myPhotoHash, -1);
+			discard();
+			me.myPhotoHash = p.hash();
+			setPhoto(p, me);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+	}
+	private void setPhoto(Photo p, CommunityRecord r){
+		try {
+			r.generation = r.generation + 1;
+			newPhoto(p.hash(), p.file());
+			db.COMMUNITYTABLE.write(r);
+		} catch (Exception e) {
+			e.printStackTrace();
+	}
+	}
+	private CommunityRecord getMe(){
+		try{
+			db.openOrCreateDatabase();
+			return db.COMMUNITYTABLE.readOne(OS.config().getProperty("host.name"));
+		} catch(Exception e){
+			Log.i("getMe", e.getMessage());
+			throw new IllegalStateException("This host is not in its own community table!");
+		}finally {
+			discard();
+		}
+	}
+	public CommunityRecord getRecord(String name){
+		try{
+			db.openOrCreateDatabase();
+			CommunityRecord out = db.COMMUNITYTABLE.readOne(name);
+			return out;
+		} catch(Exception e){
+			Log.i("getRecord", "No record for: " + name);
+			return null;
+		}
+	}
+	private void newPhoto(int hash, File f) {
+		try {
+			db.openOrCreateDatabase();
+			PhotoRecord pr = db.PHOTOTABLE.readOne(hash);
+			if(pr == null) {
+				pr = db.PHOTOTABLE.createRecord();
+				pr.hash = hash;
+				pr.refCount = 1;
+				pr.file = f;
+				db.PHOTOTABLE.write(pr);
+			} else {
+				pr.file = f;
+				db.PHOTOTABLE.write(pr);
+				changeRef(hash, 1);
+			}
+
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
 		}
 	}
 	public String toString(){
-		return db.toString();
+		try {
+			db.openOrCreateDatabase();
+			String out = db.toString();
+			discard();
+			return out;
+		} catch (Exception e) {
+			return "";
+		}
+		
 	}
+	public void fix(){
+		try {
+			db.openOrCreateDatabase();
+			db.checkAndFixDB(photoDir);
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		} finally {
+			discard();
+		}
+	}
+	
 	
 //	private List<File> getUnusedPhotos(){
 //		try{

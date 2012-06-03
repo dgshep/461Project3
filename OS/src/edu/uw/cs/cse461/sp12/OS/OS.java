@@ -46,7 +46,8 @@ public class OS {
 		   											  "edu.uw.cs.cse461.sp12.OS.SnetController"};
 	public static final String[] androidServiceClasses = {"edu.uw.cs.cse461.sp12.OS.RPCService",
 														  "edu.uw.cs.cse461.sp12.OS.EchoService",
-														  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService"};
+														  "edu.uw.cs.cse461.sp12.OS.DDNSResolverService",
+														  "edu.uw.cs.cse461.sp12.OS.SnetController"};
 	//---------------------------------------------------------------------------------------------------
 
 	// used to keep track of started services.  The String key is the name returned by the
